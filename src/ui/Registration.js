@@ -25,7 +25,6 @@ export class Registration {
 
   async render(container) {
     this.container = container;
-    const conn = await storage.testCloudConnection();
 
     container.innerHTML = `
       <div class="registration-view">
@@ -81,12 +80,6 @@ export class Registration {
                 </p>
               </div>
 
-              <!-- Connection Status Pill -->
-              <div class="reg-status-badge ${conn.mode}">
-                <span class="status-dot ${conn.isConnected ? 'status-dot-pass' : 'status-dot-standby'}"></span>
-                <span class="status-text">${conn.message}</span>
-              </div>
-
               <form id="reg-form" novalidate>
                 <div class="reg-form-group">
                   <label class="reg-label" for="reg-name">
@@ -138,10 +131,17 @@ export class Registration {
                   </button>
                 </div>
 
-                <div class="reg-footer-link-row">
-                  <button type="button" class="btn-text-link" id="btn-reg-admin-replay">
-                    <span class="btn-icon">${Icons.key(13)}</span>
-                    <span>Already played? Enter Admin Key to play again once</span>
+                <div class="admin-replay-cta-box">
+                  <div class="admin-replay-cta-header">
+                    <span class="btn-icon">${Icons.key(15)}</span>
+                    <span>Admin Key Re-access</span>
+                  </div>
+                  <p class="admin-replay-cta-desc">
+                    Already played and need a re-attempt? Authorized event admins can grant 1 replay attempt.
+                  </p>
+                  <button type="button" class="btn btn-admin-replay" id="btn-reg-admin-replay">
+                    <span class="btn-icon">${Icons.key(14)}</span>
+                    <span>Enter Admin Key to Play Again</span>
                   </button>
                 </div>
               </form>

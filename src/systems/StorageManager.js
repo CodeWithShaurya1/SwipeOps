@@ -763,13 +763,12 @@ export class StorageManager {
   async getLeaderboard(limit = 50) {
     if (this.isCloudConfigured()) {
       try {
-        // Query view
         const { data, error } = await this.supabase
           .from('swipeops_leaderboard_view')
           .select('*')
           .limit(limit);
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           return { data, source: 'cloud' };
         }
       } catch (err) {

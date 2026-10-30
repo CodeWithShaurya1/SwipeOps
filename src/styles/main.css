@@ -3294,6 +3294,71 @@ body {
   box-shadow: 0 25px 65px rgba(0, 0, 0, 0.85), 0 0 35px rgba(245, 158, 11, 0.12);
 }
 
+/* Prominent Admin Replay CTA on Registration */
+.admin-replay-cta-box {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px dashed rgba(139, 92, 246, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.25s ease;
+}
+
+.admin-replay-cta-box:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.55);
+}
+
+.admin-replay-cta-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #c4b5fd;
+}
+
+.admin-replay-cta-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.btn-admin-replay {
+  margin-top: 6px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(99, 102, 241, 0.85));
+  border: 1px solid rgba(167, 139, 250, 0.6);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-admin-replay:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 1), rgba(99, 102, 241, 1));
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    BACKDROP-FILTER UNSUPPORTED FALLBACK
    ========================================================================== */
