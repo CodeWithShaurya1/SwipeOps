@@ -32,14 +32,27 @@ Navigate to `http://localhost:5173`.
 - Inputs are normalized: enrollment is converted to **UPPERCASE** and stripped of spaces.
 - The normalized enrollment is the student's unique identifier. Even if a participant enters a different name with the same enrollment number, the system identifies them as the same student.
 - Once an attempt completes, the official attempt is locked against reuse.
-- Returning students are immediately blocked with:
-  > **YOU HAVE ALREADY PLAYED!**  
-  > *"Your official attempt has already been recorded. Please contact the event administrator if you require another attempt."*  
-  > Provides direct buttons to return to the Menu or Public Leaderboard.
+- Returning students are immediately blocked with the dynamic **MISSION LOCKED** popup:
+  ```
+  MISSION LOCKED
+  Your mission has already been completed.
+  This enrollment number has used its permitted attempt.
+  To request another attempt, contact the event administrator.
+
+  Admin Authorization Key
+  [ Enter administrator key ]
+  [ UNLOCK MISSION ]
+  [ RETURN TO HOME ]
+  ```
+- **Direct Admin Key Override**: An organizer can unlock an additional attempt directly on the student's screen by entering the administrator key (`devops2026`) and clicking **UNLOCK MISSION**.
+  - Verified server-side via `swipeops_unlock_with_admin_key` against `swipeops_security_config`.
+  - Incorrect key fails with an error and logs `UNLOCK_FAILED` in the audit log.
+  - Correct key provisions exactly 1 additional attempt, logs `ADMIN_KEY_STUDENT_UNLOCKED`, and re-locks the student as soon as that attempt is completed.
 
 ### Rule 2: Refresh, Abandoned Attempt & Concurrency Resilience
 - Starting an attempt reserves the run atomically in the database/storage with status `started`.
 - Refreshing the browser or switching tabs restores the active attempt without granting extra attempts.
+- Once an attempt completes, refreshing or re-entering details never resets scores or restarts gameplay.
 - Concurrent registration requests are handled atomically via `swipeops_start_attempt`.
 
 ### Rule 3: Admin-Authorized Replays

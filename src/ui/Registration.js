@@ -10,6 +10,7 @@
 import { sound } from '../systems/SoundFX.js';
 import { storage } from '../systems/StorageManager.js';
 import { normalizeName, normalizeEnrollment } from '../systems/IdentityUtils.js';
+import { MissionLockedModal } from './MissionLockedModal.js';
 import { Icons } from './icons.js';
 
 export class Registration {
@@ -186,8 +187,18 @@ export class Registration {
       submitBtn.innerHTML = `<span>Verify &amp; enter</span><span class="btn-icon">${Icons.arrowRight(15)}</span>`;
 
       if (!check.eligible && check.status === 'ALREADY_PLAYED') {
-        // Render explicit "YOU HAVE ALREADY PLAYED!" screen
-        this.renderAlreadyPlayed(container, check.student || { enrollment_number: enrollment, student_name: name });
+        const studentInfo = check.student || { enrollment_number: enrollment, student_name: name };
+        const modal = new MissionLockedModal({
+          student: studentInfo,
+          onUnlocked: (clearance) => {
+            this.playerData = clearance;
+            this.renderConfirmation(container);
+          },
+          onReturnHome: () => {
+            this.onBackToMenu();
+          }
+        });
+        modal.show();
         return;
       }
 
@@ -367,12 +378,23 @@ export class Registration {
         launchBtn.innerHTML = `<span>Launch rescue mission</span><span class="btn-icon">${Icons.rocket(16)}</span>`;
 
         if (attemptRes.error === 'ALREADY_PLAYED') {
-          this.renderAlreadyPlayed(container, {
+          const studentInfo = {
             student_name: attemptRes.studentName || this.playerData.name,
             enrollment_number: this.playerData.enrollment,
             best_score: attemptRes.bestScore,
             attempts_count: attemptRes.attemptsUsed
+          };
+          const modal = new MissionLockedModal({
+            student: studentInfo,
+            onUnlocked: (clearance) => {
+              this.playerData = clearance;
+              this.renderConfirmation(container);
+            },
+            onReturnHome: () => {
+              this.onBackToMenu();
+            }
           });
+          modal.show();
           return;
         }
 

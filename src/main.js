@@ -19,6 +19,7 @@ import { ScoringEngine } from './systems/ScoringEngine.js';
 import { ProductionState } from './systems/ProductionState.js';
 import { MissionTimer } from './systems/MissionTimer.js';
 import { devopsBg } from './systems/DevOpsBackground.js';
+import { storage } from './systems/StorageManager.js';
 
 const ACTIVE_MISSION_SESSION_KEY = 'swipeops_active_mission';
 
@@ -42,9 +43,18 @@ class GameApp {
     // Check if an active attempt was interrupted by a browser refresh
     const savedSession = this.getSavedActiveSession();
     if (savedSession && savedSession.playerData && savedSession.playerData.attemptId) {
-      this.playerData = savedSession.playerData;
-      // Resume the active attempt
-      this.startMission(true);
+      storage.checkStudentStatus(savedSession.playerData.enrollment).then((check) => {
+        if (check.eligible && check.status === 'ACTIVE_ATTEMPT') {
+          this.playerData = savedSession.playerData;
+          this.startMission(true);
+        } else {
+          this.clearActiveSession();
+          this.showMainMenu();
+        }
+      }).catch(() => {
+        this.clearActiveSession();
+        this.showMainMenu();
+      });
       return;
     }
 
@@ -106,6 +116,11 @@ class GameApp {
   }
 
   startMission(isResumed = false) {
+    if (!this.playerData || !this.playerData.enrollment || !this.playerData.attemptId) {
+      this.showRegistration();
+      return;
+    }
+
     this.teardownActive();
     devopsBg.setScreenMode('gameplay');
 

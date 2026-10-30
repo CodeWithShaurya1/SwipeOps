@@ -248,9 +248,58 @@ assert.strictEqual(lb.data[2].accuracy, 75);
 console.log('   ✓ Tie-breaking rules verified: Score DESC -> Accuracy DESC.');
 
 // ============================================================================
-// PART 6: ADMIN AUDIT LOG & TELEMETRY STATS
+// PART 6: DYNAMIC LOCKED MODAL & SECURE ADMIN KEY UNLOCK FLOW
 // ============================================================================
-console.log('9. Testing Admin Overview Stats & Append-Only Audit Trail...');
+console.log('9. Testing Admin Key Unlock Flow & Post-Attempt Re-locking...');
+// student 2 is currently locked
+const lockedStatusBefore = await sm.checkStudentStatus(student2Enroll);
+assert.strictEqual(lockedStatusBefore.eligible, false);
+assert.strictEqual(lockedStatusBefore.status, 'ALREADY_PLAYED');
+
+// Attempt unlock with INVALID admin key
+const invalidUnlock = await sm.unlockWithAdminKey(student2Enroll, 'wrong_admin_secret');
+assert.strictEqual(invalidUnlock.success, false);
+assert.strictEqual(invalidUnlock.error, 'INVALID_KEY');
+
+// Verify student remains locked
+const lockedStatusStill = await sm.checkStudentStatus(student2Enroll);
+assert.strictEqual(lockedStatusStill.eligible, false);
+assert.strictEqual(lockedStatusStill.status, 'ALREADY_PLAYED');
+
+// Attempt unlock with VALID admin key
+const validUnlock = await sm.unlockWithAdminKey(student2Enroll, 'devops2026');
+assert.strictEqual(validUnlock.success, true);
+assert.strictEqual(validUnlock.isReplay, true);
+assert(validUnlock.attemptId, 'Must return attemptId');
+assert.strictEqual(validUnlock.attemptNumber, 2);
+
+// Student now has active attempt
+const activeCheckAfterUnlock = await sm.checkStudentStatus(student2Enroll);
+assert.strictEqual(activeCheckAfterUnlock.status, 'ACTIVE_ATTEMPT');
+assert.strictEqual(activeCheckAfterUnlock.eligible, true);
+
+// Student completes their unlocked attempt
+await sm.completeAttempt(validUnlock.attemptId, {
+  enrollment: student2Enroll,
+  finalScore: 300,
+  accuracy: 100,
+  correct: 3,
+  incorrect: 0,
+  timeout: 0,
+  maxStreak: 3,
+  missionDuration: 25
+});
+
+// Student MUST BE LOCKED AGAIN permanently!
+const reLockedCheck = await sm.checkStudentStatus(student2Enroll);
+assert.strictEqual(reLockedCheck.eligible, false);
+assert.strictEqual(reLockedCheck.status, 'ALREADY_PLAYED');
+console.log('   ✓ Admin key unlock validated: incorrect key blocked, valid key grants 1 attempt, student re-locked upon completion.');
+
+// ============================================================================
+// PART 7: ADMIN AUDIT LOG & TELEMETRY STATS
+// ============================================================================
+console.log('10. Testing Admin Overview Stats & Append-Only Audit Trail...');
 const stats = await sm.adminGetStats();
 assert.strictEqual(stats.total_registered_players, 3);
 assert.strictEqual(stats.highest_score, 350);
@@ -258,11 +307,13 @@ assert.strictEqual(stats.students_already_played, 3);
 
 // Audit logs
 const auditLogs = await sm.adminGetAuditLog();
-assert(auditLogs.length >= 3, 'Audit log must record authorizations, revocations, and consumptions');
+assert(auditLogs.length >= 5, 'Audit log must record authorizations, revocations, failed unlock attempts, and admin key unlocks');
 const actions = auditLogs.map(l => l.action);
 assert(actions.includes('REPLAY_AUTHORIZED'), 'REPLAY_AUTHORIZED must be in audit log');
 assert(actions.includes('REPLAY_CONSUMED'), 'REPLAY_CONSUMED must be in audit log');
 assert(actions.includes('REPLAY_REVOKED'), 'REPLAY_REVOKED must be in audit log');
+assert(actions.includes('UNLOCK_FAILED'), 'UNLOCK_FAILED must be in audit log');
+assert(actions.includes('ADMIN_KEY_STUDENT_UNLOCKED'), 'ADMIN_KEY_STUDENT_UNLOCKED must be in audit log');
 
 // Password verification
 assert.strictEqual(sm.verifyAdminPassphrase('devops2026'), true);

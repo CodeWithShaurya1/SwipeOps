@@ -420,6 +420,148 @@ export class StorageManager {
     };
   }
 
+  /**
+   * Unlock an attempt for a locked student using the Administrator Authorization Key
+   * Directly called by the Mission Locked Modal.
+   * Securely verified server-side via Supabase RPC or local cryptographic validation.
+   */
+  async unlockWithAdminKey(enrollment, adminKey) {
+    const cleanEnrollment = normalizeEnrollment(enrollment);
+    const cleanKey = String(adminKey || '').trim();
+
+    if (!cleanEnrollment) {
+      return { success: false, error: 'INVALID_ENROLLMENT', message: 'Enrollment number is required.' };
+    }
+    if (!cleanKey) {
+      return { success: false, error: 'KEY_REQUIRED', message: 'Administrator key is required.' };
+    }
+
+    // 1. Cloud Verification via Supabase RPC
+    if (this.isCloudConfigured()) {
+      try {
+        const { data, error } = await this.supabase.rpc('swipeops_unlock_with_admin_key', {
+          p_enrollment: cleanEnrollment,
+          p_admin_key: cleanKey
+        });
+
+        if (!error && data) {
+          if (!data.success) {
+            return {
+              success: false,
+              error: data.error || 'INVALID_KEY',
+              message: data.message || 'Invalid administrator authorization key.'
+            };
+          }
+
+          // Mirror locally for resilience
+          this._localUnlockWithAdminKey(cleanEnrollment, cleanKey, data.attempt_id, data.attempt_number);
+
+          return {
+            success: true,
+            message: data.message,
+            attemptId: data.attempt_id,
+            attemptNumber: data.attempt_number,
+            studentName: data.student_name,
+            enrollment: cleanEnrollment,
+            isReplay: true
+          };
+        }
+      } catch (err) {
+        console.warn('Cloud unlockWithAdminKey failed, falling back to local:', err);
+      }
+    }
+
+    // 2. Standalone Local Fallback
+    return this._localUnlockWithAdminKey(cleanEnrollment, cleanKey);
+  }
+
+  _localUnlockWithAdminKey(enrollment, adminKey, fixedAttemptId = null, fixedAttemptNum = null) {
+    // Validate key against private administrator secret
+    if (!this.verifyAdminPassphrase(adminKey)) {
+      this._appendAuditLog('UNLOCK_FAILED', 'UNAUTHORIZED_ATTEMPT', enrollment, 'Invalid administrator authorization key entered at locked modal');
+      return {
+        success: false,
+        error: 'INVALID_KEY',
+        message: 'Invalid administrator authorization key. Authorization denied.'
+      };
+    }
+
+    const students = this._getLocal(LOCAL_STUDENTS_KEY);
+    const attempts = this._getLocal(LOCAL_ATTEMPTS_KEY);
+    const replays = this._getLocal(LOCAL_REPLAYS_KEY);
+    const now = new Date().toISOString();
+
+    const student = students.find(s => s.enrollment_number === enrollment);
+    if (!student) {
+      return { success: false, error: 'STUDENT_NOT_FOUND', message: `Student ${enrollment} not found in database.` };
+    }
+
+    const replayId = 'rep_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    const attemptId = fixedAttemptId || 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    const attemptNum = fixedAttemptNum || (student.attempts_count || 1) + 1;
+
+    // Create consumed replay record
+    replays.push({
+      id: replayId,
+      enrollment_number: enrollment,
+      authorized_by: 'Admin Key Modal',
+      reason: 'Direct Administrator Key Clearance',
+      status: 'consumed',
+      created_at: now,
+      consumed_at: now,
+      revoked_at: null,
+      revoked_by: null,
+      revocation_reason: null,
+      attempt_id: attemptId
+    });
+
+    // Create active attempt
+    attempts.push({
+      id: attemptId,
+      enrollment_number: enrollment,
+      player_name: student.student_name,
+      attempt_number: attemptNum,
+      status: 'started',
+      final_score: 0,
+      accuracy: 0,
+      correct_decisions: 0,
+      incorrect_decisions: 0,
+      timed_out_decisions: 0,
+      max_streak: 0,
+      mission_duration_seconds: 0,
+      is_replay: true,
+      replay_id: replayId,
+      is_test: student.is_test,
+      started_at: now,
+      completed_at: null
+    });
+
+    // Update student
+    student.status = 'active';
+    student.attempts_count = attemptNum;
+    student.replay_authorized = false;
+    student.updated_at = now;
+
+    this._appendAuditLog('ADMIN_KEY_STUDENT_UNLOCKED', 'ORGANIZER_KEY_VERIFIED', enrollment, `Authorized attempt #${attemptNum} via key override`, {
+      replayId,
+      attemptId
+    });
+
+    this._saveLocal(LOCAL_STUDENTS_KEY, students);
+    this._saveLocal(LOCAL_ATTEMPTS_KEY, attempts);
+    this._saveLocal(LOCAL_REPLAYS_KEY, replays);
+
+    return {
+      success: true,
+      message: 'Clearance verified. Additional official attempt unlocked.',
+      attemptId,
+      attemptNumber: attemptNum,
+      studentName: student.student_name,
+      enrollment,
+      isReplay: true
+    };
+  }
+
   // ==========================================================================
   // PART 4: SCORE SUBMISSION & BEST SCORE POLICY
   // ==========================================================================

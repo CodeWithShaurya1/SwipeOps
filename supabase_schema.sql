@@ -588,6 +588,125 @@ END;
 $$;
 
 -- ----------------------------------------------------------------------------
+-- 5B. Table: swipeops_security_config
+-- Stores hashed administrative passkeys for server-side verification.
+-- Completely denied from public client access.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.swipeops_security_config (
+    key TEXT PRIMARY KEY,
+    value_hash TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Seed default administrative key hash: sha256('devops2026')
+INSERT INTO public.swipeops_security_config (key, value_hash)
+VALUES ('admin_passphrase_hash', encode(digest('devops2026', 'sha256'), 'hex'))
+ON CONFLICT (key) DO NOTHING;
+
+-- F. Secure Admin Key Unlock (Called directly by Mission Locked Modal)
+CREATE OR REPLACE FUNCTION public.swipeops_unlock_with_admin_key(
+    p_enrollment TEXT,
+    p_admin_key TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_clean_enrollment TEXT;
+    v_key_hash TEXT;
+    v_expected_hash TEXT;
+    v_student RECORD;
+    v_replay_id UUID;
+    v_new_attempt_id UUID;
+    v_attempt_num INT;
+BEGIN
+    v_clean_enrollment := UPPER(TRIM(COALESCE(p_enrollment, '')));
+    v_key_hash := encode(digest(TRIM(COALESCE(p_admin_key, '')), 'sha256'), 'hex');
+
+    -- Fetch expected hash from private security config table
+    SELECT value_hash INTO v_expected_hash
+    FROM public.swipeops_security_config
+    WHERE key = 'admin_passphrase_hash';
+
+    IF v_expected_hash IS NULL THEN
+        v_expected_hash := encode(digest('devops2026', 'sha256'), 'hex');
+    END IF;
+
+    -- Verify key hash
+    IF v_key_hash != v_expected_hash THEN
+        -- Record unauthorized key attempt in audit log
+        INSERT INTO public.swipeops_audit_log (
+            action, admin_identity, target_enrollment, reason, details
+        ) VALUES (
+            'UNLOCK_FAILED', 'UNAUTHORIZED_ATTEMPT', v_clean_enrollment,
+            'Invalid administrator authorization key entered at locked modal',
+            jsonb_build_object('timestamp', NOW())
+        );
+
+        RETURN jsonb_build_object('success', false, 'error', 'INVALID_KEY', 'message', 'Invalid administrator authorization key. Authorization denied.');
+    END IF;
+
+    -- Retrieve student record
+    SELECT * INTO v_student
+    FROM public.swipeops_students
+    WHERE enrollment_number = v_clean_enrollment
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('success', false, 'error', 'STUDENT_NOT_FOUND', 'message', 'Student with this enrollment not found.');
+    END IF;
+
+    -- Create authorized replay record marked consumed
+    INSERT INTO public.swipeops_replays (
+        enrollment_number, authorized_by, reason, status, consumed_at
+    ) VALUES (
+        v_clean_enrollment, 'Admin Key Modal', 'Direct Administrator Key Clearance', 'consumed', NOW()
+    ) RETURNING id INTO v_replay_id;
+
+    -- Increment attempt number and generate attempt
+    v_attempt_num := v_student.attempts_count + 1;
+
+    INSERT INTO public.swipeops_attempts (
+        enrollment_number, player_name, attempt_number, status, is_replay, replay_id, is_test
+    ) VALUES (
+        v_clean_enrollment, v_student.student_name, v_attempt_num, 'started', true, v_replay_id, v_student.is_test
+    ) RETURNING id INTO v_new_attempt_id;
+
+    -- Link attempt_id
+    UPDATE public.swipeops_replays
+    SET attempt_id = v_new_attempt_id
+    WHERE id = v_replay_id;
+
+    -- Update student status
+    UPDATE public.swipeops_students
+    SET status = 'active',
+        attempts_count = v_attempt_num,
+        replay_authorized = false,
+        updated_at = NOW()
+    WHERE enrollment_number = v_clean_enrollment;
+
+    -- Record in audit log
+    INSERT INTO public.swipeops_audit_log (
+        action, admin_identity, target_enrollment, reason, details
+    ) VALUES (
+        'ADMIN_KEY_STUDENT_UNLOCKED', 'ORGANIZER_KEY_VERIFIED', v_clean_enrollment,
+        CONCAT('Authorized additional attempt #', v_attempt_num, ' via administrator key override'),
+        jsonb_build_object('replay_id', v_replay_id, 'attempt_id', v_new_attempt_id, 'attempt_number', v_attempt_num)
+    );
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'message', 'Clearance verified. Additional official attempt unlocked.',
+        'attempt_id', v_new_attempt_id,
+        'attempt_number', v_attempt_num,
+        'student_name', v_student.student_name,
+        'enrollment_number', v_clean_enrollment
+    );
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
 -- 8. Row Level Security (RLS) Configuration
 -- ----------------------------------------------------------------------------
 
@@ -597,6 +716,13 @@ ALTER TABLE public.swipeops_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.swipeops_replays ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.swipeops_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.devops_arena_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.swipeops_security_config ENABLE ROW LEVEL SECURITY;
+
+-- Deny public direct access to security config
+CREATE POLICY "Deny Public Access Config" 
+ON public.swipeops_security_config
+FOR ALL 
+USING (false);
 
 -- Leaderboard: Public read
 CREATE POLICY "Public Read Leaderboard View" 
