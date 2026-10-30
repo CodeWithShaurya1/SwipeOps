@@ -6,6 +6,7 @@
 
 An adrenaline-pumping, Tinder-style incident response game built for **Club Battle: TechVerse** organized by the **DevOps Club**.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-swipe--opsgame.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://swipe-opsgame.vercel.app)
 [![Event](https://img.shields.io/badge/Event-TechVerse-8B5CF6?style=for-the-badge&logo=google-cloud&logoColor=white)](https://github.com/CodeWithShaurya1/SwipeOps)
 [![Club](https://img.shields.io/badge/Club-DevOps%20Club-38BDF8?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/CodeWithShaurya1/SwipeOps)
 [![Vite](https://img.shields.io/badge/Built%20With-Vite%208-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -18,7 +19,8 @@ An adrenaline-pumping, Tinder-style incident response game built for **Club Batt
 **React fast. Think smart. Save production.**  
 *3 critical incidents. 15 seconds per round. 45 seconds total. Can you keep the cluster online?*
 
-[Play Locally](#-quickstart) • [Game Mechanics](#-game-mechanics) • [Scoring Rules](#-scoring--streak-system) • [Architecture](#-architecture--tech-stack)
+🎮 **Play Live:** [https://swipe-opsgame.vercel.app](https://swipe-opsgame.vercel.app)  
+[Play Live Demo](https://swipe-opsgame.vercel.app) • [Play Locally](#-quickstart) • [Game Mechanics](#-game-mechanics) • [Scoring Rules](#-scoring--streak-system) • [Architecture](#-architecture--tech-stack)
 
 </div>
 
@@ -181,7 +183,15 @@ Includes automatic fallback styles for browsers that do not support CSS `backdro
 
 ## 🚀 Quickstart
 
-### Prerequisites
+### 🎮 Play Instantly (Live on Vercel)
+Launch the game directly in your browser without local setup:
+👉 **[https://swipe-opsgame.vercel.app](https://swipe-opsgame.vercel.app)**
+
+---
+
+### Local Setup & Development
+
+#### Prerequisites
 - Node.js (v18.0 or higher)
 - npm or pnpm
 
