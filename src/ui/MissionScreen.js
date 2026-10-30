@@ -55,7 +55,7 @@ export class MissionScreen {
         <!-- Top Status Bar -->
         <header class="top-status-bar glass-surface">
           <div class="brand-section">
-            <div class="brand-logo-text">DEVOPS <span>ARENA</span></div>
+            <div class="brand-logo-text">SWIPE<span>OPS</span></div>
             <div class="player-tag">
               <span class="player-icon">${Icons.user(13)}</span>
               <span>${this.escapeHtml(this.playerData.name)}</span>

@@ -2,12 +2,13 @@
  * DevOpsBackground
  * Ultra-responsive, high-framerate DevOps-Themed Matrix Rain Canvas Animation.
  * 
- * Features:
- * - 1.8x-2.2x faster streams with controlled speed variation (fast bursts, medium primary, slow depth)
- * - Immediate viewport population on launch (no waiting for offscreen drops)
- * - Complete DevOps technical tokens ('git push', 'git pull', 'docker', 'kubectl', 'helm', 'CI/CD', 'build', 'test', 'deploy', 'logs', 'YAML', 'env', '{}', '</>', '01', etc.)
- * - Deep midnight navy canvas vignette (#060A13 foundation with #46D5F5 cyan / #9B7BFF violet accents)
- * - Central Quiet Zone (26%-74% width) with low opacity so forms and cards remain completely legible
+ * Restores and polishes the expressive, dynamic Matrix falling-code atmosphere:
+ * - 1.8x-2x dynamic stream speeds with distinct velocity tiers (fast highlights, primary streams, depth streams)
+ * - Immediate full-screen population on launch (rain is visibly moving instantly)
+ * - DevOps technical tokens ('docker', 'git push', 'kubectl', 'helm', 'build', 'test', 'deploy', 'CI/CD', 'YAML', 'logs', 'pod', 'env', '01', '{}', '</>')
+ * - Bright leading characters with crisp cyan glow and natural trailing alpha decay
+ * - Rich technical palette: Cyan (#46D5F5), Teal (#2DD4BF), Blue (#479BFF), Violet (#9B7BFF)
+ * - Intelligent readability zoning (center streams adapt to keep landing copy, registration, and gameplay cards sharp)
  * - Peripheral CI/CD conduits with traveling telemetry packets along screen borders
  * - Delta-time normalized 60 FPS requestAnimationFrame with tab visibility pause
  * - Interactive shockwaves on decisions (#39D9A0 emerald on success, #FF6B7D coral on incident)
@@ -23,15 +24,18 @@ export class DevOpsBackground {
     this.height = 0;
     this.dpr = 1;
 
+    // Active Screen Context: 'menu' | 'registration' | 'gameplay' | 'gameover' | 'leaderboard'
+    this.screenMode = 'menu';
+
     // Stream state
     this.columns = [];
-    this.colWidth = 54; // Generous column spacing to eliminate clutter
+    this.colWidth = 38; // Rich, organic stream density
     this.tokens = [
-      'git push', 'deploy', 'kubectl', 'helm', 'k8s',
-      'build:ok', 'test:pass', 'v2.4.0', 'pod', '200 OK',
-      'sha:8f3c', 'main', 'release', 'sync'
+      'docker', 'git push', 'kubectl', 'helm', 'build', 'test',
+      'deploy', 'CI/CD', 'YAML', 'logs', 'pod', 'env', '01',
+      '{}', '</>', 'k8s', '200 OK', 'main', 'sync', 'release'
     ];
-    this.chars = '01{}</>$:;=-+*~';
+    this.chars = '01{}</>$:;=-+*~#@%&[]';
 
     // Peripheral conduit packets
     this.leftPackets = [];
@@ -60,7 +64,7 @@ export class DevOpsBackground {
     this.canvas.style.height = '100vh';
     this.canvas.style.pointerEvents = 'none';
     this.canvas.style.zIndex = '0';
-    this.canvas.style.opacity = '0.98';
+    this.canvas.style.opacity = '1';
 
     container.prepend(this.canvas);
     this.ctx = this.canvas.getContext('2d');
@@ -83,6 +87,18 @@ export class DevOpsBackground {
 
     this.handleResize();
     this.start();
+  }
+
+  setScreenMode(mode = 'menu') {
+    this.screenMode = mode;
+    // Update stream opacities smoothly for the active screen
+    const isContentHeavy = mode === 'registration' || mode === 'gameplay';
+    const centerTarget = mode === 'menu' ? 0.44 : (isContentHeavy ? 0.25 : 0.35);
+    const edgeTarget = mode === 'menu' ? 0.92 : (isContentHeavy ? 0.65 : 0.80);
+
+    this.columns.forEach(col => {
+      col.opacityMultiplier = col.isCenterZone ? centerTarget : edgeTarget;
+    });
   }
 
   handleResize() {
@@ -113,49 +129,67 @@ export class DevOpsBackground {
     const numCols = Math.floor(w / this.colWidth);
     this.columns = [];
 
+    const isContentHeavy = this.screenMode === 'registration' || this.screenMode === 'gameplay';
+    const centerOpacity = this.screenMode === 'menu' ? 0.44 : (isContentHeavy ? 0.25 : 0.35);
+    const edgeOpacity = this.screenMode === 'menu' ? 0.92 : (isContentHeavy ? 0.65 : 0.80);
+
     for (let i = 0; i < numCols; i++) {
       const x = i * this.colWidth + (this.colWidth * 0.5);
       
-      // Central Calm Zone: 20% to 80% of viewport width
+      // Central readability zone (between 24% and 76% of viewport)
       const xRatio = x / w;
-      const isCenterZone = xRatio > 0.20 && xRatio < 0.80;
+      const isCenterZone = xRatio > 0.24 && xRatio < 0.76;
 
-      // Keep center calm (10% density), edges lightly active (40% density)
-      const shouldActivate = isCenterZone ? Math.random() < 0.10 : Math.random() < 0.40;
+      // Ensure active presence across full screen:
+      // Center zone streams are fully active but rendered with dedicated readability opacity
+      const shouldActivate = isCenterZone 
+        ? Math.random() < (this.screenMode === 'menu' ? 0.45 : 0.28) 
+        : Math.random() < 0.75;
 
-      const streamLength = 6 + Math.floor(Math.random() * 8); // 6 to 14 chars
+      const streamLength = 8 + Math.floor(Math.random() * 14); // 8 to 22 items
       
+      // Dynamic Speed Hierarchy:
+      // Fast highlight: 5.4 - 8.8 px/frame (~1.8-2x faster)
+      // Primary stream: 2.8 - 5.4 px/frame
+      // Depth stream: 1.6 - 3.0 px/frame
       const speedRoll = Math.random();
       let speed;
       let isFastHighlight = false;
 
-      if (speedRoll < 0.10 && !isCenterZone) {
-        speed = 3.0 + Math.random() * 1.5;
+      if (speedRoll < 0.14 && !isCenterZone) {
+        speed = 5.4 + Math.random() * 3.4;
         isFastHighlight = true;
+      } else if (speedRoll < 0.78) {
+        speed = 2.8 + Math.random() * 2.6;
       } else {
-        speed = 1.2 + Math.random() * 1.4; // Soft natural movement
+        speed = 1.6 + Math.random() * 1.4;
       }
 
-      // Generate characters
+      // Generate characters & tokens
       const items = [];
       for (let j = 0; j < streamLength; j++) {
-        const isToken = Math.random() < 0.35;
+        const isToken = Math.random() < 0.28;
         const text = isToken 
           ? this.tokens[Math.floor(Math.random() * this.tokens.length)]
           : this.chars[Math.floor(Math.random() * this.chars.length)];
         
-        // Steel blue (dominant), muted cyan (accent), subtle violet
+        // Dynamic palette: Cyan (dominant), Teal, Blue, and subtle Violet
         const roll = Math.random();
-        const colorType = roll < 0.55 ? 'steel' : (roll < 0.85 ? 'cyan' : 'violet');
+        let colorType = 'cyan';
+        if (roll < 0.50) colorType = 'cyan';
+        else if (roll < 0.75) colorType = 'teal';
+        else if (roll < 0.90) colorType = 'blue';
+        else colorType = 'violet';
 
         items.push({
           text,
           isToken,
           colorType,
-          glitchTimer: Math.floor(Math.random() * 120)
+          glitchTimer: Math.floor(Math.random() * 100)
         });
       }
 
+      // Distribute immediately across screen height so animation is visibly running right away!
       this.columns.push({
         x,
         y: Math.random() * h,
@@ -165,19 +199,19 @@ export class DevOpsBackground {
         isFastHighlight,
         length: streamLength,
         items,
-        fontSize: isCenterZone ? 10 : 11,
-        opacityMultiplier: isCenterZone ? 0.16 : 0.60
+        fontSize: isFastHighlight ? 13 : (isCenterZone ? 11 : 12),
+        opacityMultiplier: isCenterZone ? centerOpacity : edgeOpacity
       });
     }
 
-    // Initialize peripheral conduit packets
+    // Peripheral conduit packets along screen borders
     this.leftPackets = [
-      { y: 50, speed: 4.2 },
-      { y: h * 0.55, speed: 5.6 }
+      { y: 50, speed: 4.8 },
+      { y: h * 0.55, speed: 6.2 }
     ];
     this.rightPackets = [
-      { y: 120, speed: 4.8 },
-      { y: h * 0.72, speed: 5.2 }
+      { y: 120, speed: 5.2 },
+      { y: h * 0.72, speed: 5.8 }
     ];
   }
 
@@ -193,8 +227,8 @@ export class DevOpsBackground {
       radius: 12,
       maxRadius: Math.max(this.width, this.height) * 0.75,
       color: '#39D9A0', // emerald token
-      alpha: 0.80,
-      speed: 22,
+      alpha: 0.85,
+      speed: 24,
       type: 'success'
     });
   }
@@ -211,8 +245,8 @@ export class DevOpsBackground {
       radius: 12,
       maxRadius: Math.max(this.width, this.height) * 0.70,
       color: '#FF6B7D', // coral token
-      alpha: 0.75,
-      speed: 20,
+      alpha: 0.80,
+      speed: 22,
       type: 'incident'
     });
   }
@@ -251,16 +285,16 @@ export class DevOpsBackground {
     ctx.clearRect(0, 0, w, h);
 
     // 1. Deep Midnight Navy Background Vignette
-    const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.40, 20, w * 0.5, h * 0.5, Math.max(w, h) * 0.88);
-    bgGrad.addColorStop(0, '#0B1220'); // secondary background core
+    const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.40, 30, w * 0.5, h * 0.5, Math.max(w, h) * 0.88);
+    bgGrad.addColorStop(0, '#0B1220');   // elevated midnight navy core
     bgGrad.addColorStop(0.55, '#060A13'); // deep midnight foundation
-    bgGrad.addColorStop(1, '#020408'); // near-black edge
+    bgGrad.addColorStop(1, '#020408');   // near-black edge
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
     // 2. Peripheral Screen Edge Conduits & Flowing Packets
-    const edgeMargin = Math.max(24, Math.min(48, w * 0.03));
-    ctx.strokeStyle = 'rgba(70, 213, 245, 0.08)';
+    const edgeMargin = Math.max(20, Math.min(44, w * 0.025));
+    ctx.strokeStyle = 'rgba(70, 213, 245, 0.12)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(edgeMargin, 0);
@@ -275,26 +309,28 @@ export class DevOpsBackground {
       this.leftPackets.forEach(pkt => {
         pkt.y += pkt.speed * dt;
         if (pkt.y > h + 20) pkt.y = -30;
-        ctx.fillRect(edgeMargin - 1, pkt.y, 3, 14);
+        ctx.fillRect(edgeMargin - 1, pkt.y, 3, 16);
       });
 
       ctx.fillStyle = '#9B7BFF';
       this.rightPackets.forEach(pkt => {
         pkt.y += pkt.speed * dt;
         if (pkt.y > h + 20) pkt.y = -30;
-        ctx.fillRect(w - edgeMargin - 1, pkt.y, 3, 14);
+        ctx.fillRect(w - edgeMargin - 1, pkt.y, 3, 16);
       });
     }
 
-    // 3. Render Sparse Technical Matrix Streams
+    // 3. Render Technical Matrix Rain Streams
     if (!this.isReducedMotion) {
+      const stepY = 20;
+
       this.columns.forEach((col) => {
         if (!col.active) return;
 
         col.y += col.speed * dt;
 
         // Reset column when it passes below screen
-        if (col.y - (col.length * 20) > h) {
+        if (col.y - (col.length * stepY) > h) {
           col.y = -Math.random() * 160 - 30;
           // Randomize characters on new drop
           col.items.forEach(item => {
@@ -308,7 +344,6 @@ export class DevOpsBackground {
         ctx.font = `600 ${col.fontSize}px "JetBrains Mono", monospace`;
         ctx.textAlign = 'center';
 
-        const stepY = 20;
         const totalItems = col.items.length;
 
         for (let j = 0; j < totalItems; j++) {
@@ -326,24 +361,30 @@ export class DevOpsBackground {
 
           // Trailing alpha decay
           const trailFraction = 1 - (j / totalItems);
-          let alpha = Math.max(0.04, trailFraction * 0.40) * col.opacityMultiplier;
+          let alpha = Math.max(0.04, trailFraction * 0.52) * col.opacityMultiplier;
 
-          // Leading character is crisp and slightly brighter, no blurry neon shadows
+          // Leading character is bright and crisp with subtle glow
           const isLeader = j === 0;
           if (isLeader) {
-            alpha = Math.min(0.85, alpha * 2.0);
-            ctx.fillStyle = col.isFastHighlight ? '#F8FAFC' : '#E2E8F0';
+            alpha = Math.min(0.98, alpha * 2.4);
+            ctx.fillStyle = col.isFastHighlight ? '#FFFFFF' : '#E0F8FF';
+            ctx.shadowColor = '#46D5F5';
+            ctx.shadowBlur = col.isFastHighlight ? 12 : 8;
           } else {
+            ctx.shadowBlur = 0;
             if (item.colorType === 'cyan') {
-              ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`;
-            } else if (item.colorType === 'steel') {
-              ctx.fillStyle = `rgba(148, 163, 184, ${alpha})`;
+              ctx.fillStyle = `rgba(70, 213, 245, ${alpha})`;
+            } else if (item.colorType === 'teal') {
+              ctx.fillStyle = `rgba(45, 212, 191, ${alpha})`;
+            } else if (item.colorType === 'blue') {
+              ctx.fillStyle = `rgba(71, 155, 255, ${alpha})`;
             } else {
-              ctx.fillStyle = `rgba(129, 140, 248, ${alpha * 0.75})`;
+              ctx.fillStyle = `rgba(155, 123, 255, ${alpha * 0.85})`;
             }
           }
 
           ctx.fillText(item.text, col.x, charY);
+          ctx.shadowBlur = 0;
         }
       });
     }
@@ -364,10 +405,10 @@ export class DevOpsBackground {
         ctx.beginPath();
         ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
         ctx.strokeStyle = sw.color;
-        ctx.globalAlpha = sw.alpha * 0.60;
+        ctx.globalAlpha = sw.alpha * 0.65;
         ctx.lineWidth = 2.5;
         ctx.shadowColor = sw.color;
-        ctx.shadowBlur = 16;
+        ctx.shadowBlur = 18;
         ctx.stroke();
         ctx.restore();
       }

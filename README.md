@@ -1,7 +1,8 @@
 <div align="center">
 
 # ⚡ SwipeOps
-### DEVOPS ARENA — The Production Rescue Mission
+### The Production Rescue Mission
+**Club Battle · TechVerse · DevOps Club**
 
 An adrenaline-pumping, Tinder-style incident response game built for **Club Battle: TechVerse** organized by the **DevOps Club**.
 
@@ -57,7 +58,7 @@ Players face a dynamic deck of real-world infrastructure failures. Using fluid *
 
 ```
        ┌────────────────────────────────────────────────────────┐
-       │                  DEVOPS ARENA : HUD                    │
+       │                    SWIPEOPS : HUD                      │
        │  Round 01 of 03  │  ⏱️ 15s Round  │  🔥 0 STREAK  │ 0 pts │
        └────────────────────────────────────────────────────────┘
                                    │

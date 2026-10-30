@@ -28,7 +28,7 @@ export class Registration {
           <div class="reg-briefing-pane">
             <div class="event-badge">
               <span class="badge-dot"></span>
-              <span>Operator onboarding · TechVerse</span>
+              <span>Operator onboarding · TechVerse · DevOps Club</span>
             </div>
 
             <h1 class="reg-hero-title">Ready to save production?</h1>
@@ -64,7 +64,7 @@ export class Registration {
             <div class="reg-card glass-surface">
               <div class="reg-header">
                 <div class="reg-card-tag">Operator credentials</div>
-                <h2 class="reg-card-title">Enter the Arena</h2>
+                <h2 class="reg-card-title">Register for SwipeOps</h2>
                 <p class="reg-card-subtitle">
                   Authenticate your callsign for the TechVerse leaderboard.
                 </p>

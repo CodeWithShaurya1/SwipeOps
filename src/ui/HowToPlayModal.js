@@ -18,7 +18,7 @@ export class HowToPlayModal {
     backdrop.innerHTML = `
       <div class="modal-dialog glass-surface">
         <div class="modal-header-row">
-          <h3 class="modal-title">Mission briefing · How to play</h3>
+          <h3 class="modal-title">SwipeOps Briefing · How to play</h3>
           <button class="modal-close-icon-btn" id="btn-modal-close-x" aria-label="Close modal">
             ${Icons.close(16)}
           </button>

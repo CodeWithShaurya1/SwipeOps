@@ -60,8 +60,8 @@ export class GameOver {
     this.container.innerHTML = `
       <div class="game-over-screen">
         <div class="results-card glass-surface">
-          <div class="results-eyebrow">3-round mission complete</div>
-          <h2 class="results-title">Incident Debriefing</h2>
+          <div class="results-eyebrow">SwipeOps · 3-round mission complete</div>
+          <h2 class="results-title">Mission Debriefing</h2>
           
           <div class="results-tier-badge">
             ${tier}

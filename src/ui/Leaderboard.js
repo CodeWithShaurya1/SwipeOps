@@ -25,8 +25,8 @@ export class Leaderboard {
       <div class="leaderboard-screen">
         <div class="leaderboard-header">
           <div class="leaderboard-title">
-            <div class="category-tag">Competitive rankings</div>
-            <h2>Global Incident Leaderboard</h2>
+            <div class="category-tag">Club Battle · TechVerse · DevOps Club</div>
+            <h2>SwipeOps Global Leaderboard</h2>
           </div>
         </div>
         <div class="leaderboard-card glass-surface">
@@ -95,8 +95,8 @@ export class Leaderboard {
       <div class="leaderboard-screen">
         <div class="leaderboard-header">
           <div class="leaderboard-title">
-            <div class="category-tag">TechVerse challenge</div>
-            <h2>Global incident leaderboard</h2>
+            <div class="category-tag">Club Battle · TechVerse · DevOps Club</div>
+            <h2>SwipeOps Global Leaderboard</h2>
             <div style="font-family: var(--font-mono); font-size: 0.8rem; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
               <span class="status-dot ${isCloud ? 'status-dot-pass' : 'status-dot-standby'}"></span>
               <span class="text-muted">Source:</span>

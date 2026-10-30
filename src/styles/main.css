@@ -1,8 +1,8 @@
 :root {
-  /* Core DevOps Arena Design Tokens */
+  /* Core SwipeOps Design Tokens */
   --bg-deep: #060A13;
   --bg-secondary: #0B1220;
-  --bg-surface-elevated: #111B2C;
+  --bg-surface-elevated: #101A2B;
   --color-cyan: #46D5F5;
   --color-blue: #479BFF;
   --color-violet: #9B7BFF;
@@ -13,10 +13,10 @@
   --text-secondary: #A0AEC1;
 
   /* Glassmorphism System Tokens */
-  --glass-base: rgba(15, 23, 42, 0.40);
+  --glass-base: rgba(15, 23, 42, 0.42);
   --glass-panel: rgba(15, 23, 42, 0.48);
-  --glass-panel-elevated: rgba(14, 22, 38, 0.62);
-  --glass-card-active: rgba(14, 22, 38, 0.68);
+  --glass-panel-elevated: rgba(16, 26, 43, 0.62);
+  --glass-card-active: rgba(16, 26, 43, 0.70);
   --glass-subtle: rgba(15, 23, 42, 0.38);
   --glass-input: rgba(11, 18, 32, 0.60);
   --glass-blur-base: blur(16px) saturate(135%);
@@ -271,9 +271,9 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #38BDF8;
+  background: var(--color-cyan, #46D5F5);
   display: inline-block;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 8px rgba(70, 213, 245, 0.5);
 }
 
 /* Editorial Hero Typography */
@@ -289,13 +289,13 @@ body {
   font-weight: 850;
   letter-spacing: -0.025em;
   line-height: 1.08;
-  color: #F8FAFC;
+  color: var(--text-primary, #F2F5FC);
   margin-bottom: clamp(10px, 1.4vh, 14px);
   text-transform: uppercase;
 }
 
 .hero-title .highlight-cyan {
-  color: #38BDF8;
+  color: var(--color-cyan, #46D5F5);
 }
 
 .hero-subtitle {

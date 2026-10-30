@@ -38,6 +38,7 @@ class GameApp {
 
   showMainMenu() {
     this.teardownActive();
+    devopsBg.setScreenMode('menu');
     const menu = new MainMenu({
       onStartMission: () => this.showRegistration(),
       onHowToPlay: () => HowToPlayModal.show(),
@@ -49,6 +50,7 @@ class GameApp {
 
   showRegistration() {
     this.teardownActive();
+    devopsBg.setScreenMode('registration');
     const registration = new Registration({
       onReadyToLaunch: (playerData) => {
         this.playerData = playerData;
@@ -62,6 +64,7 @@ class GameApp {
 
   startMission() {
     this.teardownActive();
+    devopsBg.setScreenMode('gameplay');
 
     // Instantiate fresh, decoupled systems for this mission session
     this.incidentEngine = new IncidentEngine();
@@ -97,6 +100,7 @@ class GameApp {
     const missionDuration = this.missionTimer.getMissionElapsed();
 
     this.teardownActive();
+    devopsBg.setScreenMode('gameover');
 
     const gameOver = new GameOver({
       playerData: this.playerData,
@@ -115,6 +119,7 @@ class GameApp {
 
   showLeaderboard() {
     this.teardownActive();
+    devopsBg.setScreenMode('leaderboard');
     const leaderboard = new Leaderboard({
       onBackToMenu: () => this.showMainMenu(),
       onStartMission: () => this.showRegistration()

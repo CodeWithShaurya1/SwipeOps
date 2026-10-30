@@ -22,12 +22,12 @@ export class MainMenu {
         <!-- Event Top Identifier -->
         <div class="event-badge">
           <span class="badge-dot"></span>
-          <span>TechVerse · DevOps Club Challenge</span>
+          <span>Club Battle · TechVerse · DevOps Club</span>
         </div>
 
         <!-- Editorial Hero Title & Clear Narrative Hierarchy -->
         <div class="hero-header-block">
-          <h1 class="hero-title">DEVOPS <span class="highlight-cyan">ARENA</span></h1>
+          <h1 class="hero-title">SWIPE<span class="highlight-cyan">OPS</span></h1>
           <p class="hero-subtitle">The Production Rescue Mission</p>
           <p class="hero-tagline">
             Three critical incidents. 45 seconds. Can you keep the cluster online?
