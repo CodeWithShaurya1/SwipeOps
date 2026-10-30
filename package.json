@@ -1,0 +1,19 @@
+{
+  "name": "devops-arena",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node test/multi_round_progression.test.js && node test/game_engine.test.js && node test/timer_countdown.test.js && node test/tinder_swipe_deck.test.js"
+  },
+  "devDependencies": {
+    "vite": "^8.3.5"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "canvas-confetti": "^1.9.4"
+  }
+}
