@@ -267,7 +267,7 @@ assert.strictEqual(lockedStatusStill.eligible, false);
 assert.strictEqual(lockedStatusStill.status, 'ALREADY_PLAYED');
 
 // Attempt unlock with VALID admin key
-const validUnlock = await sm.unlockWithAdminKey(student2Enroll, 'devops2026');
+const validUnlock = await sm.unlockWithAdminKey(student2Enroll, 'SHAURYA@GAME999');
 assert.strictEqual(validUnlock.success, true);
 assert.strictEqual(validUnlock.isReplay, true);
 assert(validUnlock.attemptId, 'Must return attemptId');
@@ -316,7 +316,7 @@ assert(actions.includes('UNLOCK_FAILED'), 'UNLOCK_FAILED must be in audit log');
 assert(actions.includes('ADMIN_KEY_STUDENT_UNLOCKED'), 'ADMIN_KEY_STUDENT_UNLOCKED must be in audit log');
 
 // Password verification
-assert.strictEqual(sm.verifyAdminPassphrase('devops2026'), true);
+assert.strictEqual(sm.verifyAdminPassphrase('SHAURYA@GAME999'), true);
 assert.strictEqual(sm.verifyAdminPassphrase('wrongpass'), false);
 console.log('   ✓ Admin stats, audit logs, and security passphrase verified.');
 
@@ -324,8 +324,8 @@ console.log('   ✓ Admin stats, audit logs, and security passphrase verified.')
 // PART 8: CRYPTOGRAPHIC ADMIN KEY VERIFICATION & RATE LIMIT DEFENSE
 // ============================================================================
 console.log('11. Testing Cryptographic Admin Key Verification...');
-const isKeyValid = await sm.verifyAdminKey('devops2026');
-assert.strictEqual(isKeyValid, true, 'SHA-256 / configured key check must pass for devops2026');
+const isKeyValid = await sm.verifyAdminKey('SHAURYA@GAME999');
+assert.strictEqual(isKeyValid, true, 'SHA-256 / configured key check must pass for SHAURYA@GAME999');
 
 const isKeyInvalid = await sm.verifyAdminKey('incorrect_key');
 assert.strictEqual(isKeyInvalid, false, 'Invalid admin key must be rejected');

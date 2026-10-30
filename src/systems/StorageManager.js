@@ -19,7 +19,7 @@ const SUBMITTED_SESSIONS_KEY = 'devops_arena_submitted_sessions';
 // Default Cloud Connection & Admin Key
 const DEFAULT_SUPABASE_URL = 'https://rrocaucskfsokxubpgra.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_QEmcA7peluK0phKfbIhdRA_lbtrCFmb';
-const DEFAULT_ADMIN_PASSPHRASE = 'devops2026';
+const DEFAULT_ADMIN_PASSPHRASE = 'SHAURYA@GAME999';
 
 export class StorageManager {
   constructor() {
@@ -856,7 +856,7 @@ export class StorageManager {
     // 2. Standalone Verification:
     // Check against sha-256 hash or configured env passphrase
     const hash = await this.hashString(cleanKey);
-    const expectedHash = 'a60c5f409b1d2d5e941f9bed31f668c8ae3b9eb3c63a039de488597dfb927459';
+    const expectedHash = 'fec670eaa6b7732ddd1fab99a102d1413c7c439fcd8f3fdc2310d458ad2036bc';
     return hash === expectedHash || cleanKey === this.adminPassphrase || cleanKey === DEFAULT_ADMIN_PASSPHRASE;
   }
 

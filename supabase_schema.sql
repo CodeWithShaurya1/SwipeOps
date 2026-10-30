@@ -598,10 +598,36 @@ CREATE TABLE IF NOT EXISTS public.swipeops_security_config (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Seed default administrative key hash: sha256('devops2026')
+-- Seed default administrative key hash: sha256('SHAURYA@GAME999')
 INSERT INTO public.swipeops_security_config (key, value_hash)
-VALUES ('admin_passphrase_hash', encode(digest('devops2026', 'sha256'), 'hex'))
-ON CONFLICT (key) DO NOTHING;
+VALUES ('admin_passphrase_hash', encode(digest('SHAURYA@GAME999', 'sha256'), 'hex'))
+ON CONFLICT (key) DO UPDATE SET value_hash = EXCLUDED.value_hash, updated_at = NOW();
+
+-- Stored Function: Verify Admin Key
+CREATE OR REPLACE FUNCTION public.swipeops_verify_admin_key(
+    p_key TEXT
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_key_hash TEXT;
+    v_expected_hash TEXT;
+BEGIN
+    v_key_hash := encode(digest(TRIM(COALESCE(p_key, '')), 'sha256'), 'hex');
+    
+    SELECT value_hash INTO v_expected_hash
+    FROM public.swipeops_security_config
+    WHERE key = 'admin_passphrase_hash';
+
+    IF v_expected_hash IS NULL THEN
+        v_expected_hash := encode(digest('SHAURYA@GAME999', 'sha256'), 'hex');
+    END IF;
+
+    RETURN (v_key_hash = v_expected_hash);
+END;
+$$;
 
 -- F. Secure Admin Key Unlock (Called directly by Mission Locked Modal)
 CREATE OR REPLACE FUNCTION public.swipeops_unlock_with_admin_key(
@@ -630,7 +656,7 @@ BEGIN
     WHERE key = 'admin_passphrase_hash';
 
     IF v_expected_hash IS NULL THEN
-        v_expected_hash := encode(digest('devops2026', 'sha256'), 'hex');
+        v_expected_hash := encode(digest('SHAURYA@GAME999', 'sha256'), 'hex');
     END IF;
 
     -- Verify key hash
