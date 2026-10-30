@@ -23,6 +23,39 @@ export class Registration {
     this.container = null;
   }
 
+  getCredentialAttempts() {
+    try {
+      return JSON.parse(sessionStorage.getItem('swipeops_reg_credential_attempts') || '{}');
+    } catch (_) {
+      return {};
+    }
+  }
+
+  recordCredentialAttempt(enrollment) {
+    try {
+      const key = String(enrollment || '').trim().toUpperCase();
+      if (!key) return 0;
+      const attempts = this.getCredentialAttempts();
+      const nextCount = (attempts[key] || 0) + 1;
+      attempts[key] = nextCount;
+      sessionStorage.setItem('swipeops_reg_credential_attempts', JSON.stringify(attempts));
+      return nextCount;
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  getAttemptCountFor(enrollment) {
+    try {
+      const key = String(enrollment || '').trim().toUpperCase();
+      if (!key) return 0;
+      const attempts = this.getCredentialAttempts();
+      return attempts[key] || 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   async render(container) {
     this.container = container;
 
@@ -131,7 +164,7 @@ export class Registration {
                   </button>
                 </div>
 
-                <div class="admin-replay-cta-box">
+                <div class="admin-replay-cta-box" id="admin-replay-box" style="display: none;">
                   <div class="admin-replay-cta-header">
                     <span class="btn-icon">${Icons.key(15)}</span>
                     <span>Admin Key Re-access</span>
@@ -158,12 +191,21 @@ export class Registration {
     const errBox = container.querySelector('#reg-error');
     const submitBtn = container.querySelector('#btn-reg-submit');
     const footerAdminBtn = container.querySelector('#btn-reg-admin-replay');
+    const adminBox = container.querySelector('#admin-replay-box');
 
     nameInput.addEventListener('input', () => {
       nameInput.value = nameInput.value.toUpperCase();
     });
+
     enrollInput.addEventListener('input', () => {
       enrollInput.value = enrollInput.value.toUpperCase();
+      const currentEnroll = normalizeEnrollment(enrollInput.value);
+      // Keep admin key option hidden unless current credentials have been entered at least twice
+      if (!currentEnroll || this.getAttemptCountFor(currentEnroll) < 2) {
+        if (adminBox) adminBox.style.display = 'none';
+      } else if (adminBox) {
+        adminBox.style.display = 'flex';
+      }
     });
 
     nameInput.focus();
@@ -202,6 +244,9 @@ export class Registration {
         return;
       }
 
+      // Track attempts for this credential in the session
+      const attemptCount = this.recordCredentialAttempt(enrollment);
+
       submitBtn.disabled = true;
       submitBtn.innerHTML = `<span>Verifying official eligibility...</span>`;
 
@@ -218,34 +263,36 @@ export class Registration {
           best_score: check.bestScore || 0
         };
 
-        if (typeof this.onAccessRestricted === 'function') {
-          this.onAccessRestricted(studentInfo);
+        // When the user enters the same credentials twice (attemptCount >= 2), reveal admin replay option on this page!
+        if (attemptCount >= 2) {
+          if (adminBox) {
+            adminBox.style.display = 'flex';
+            adminBox.classList.add('revealed-animation');
+            adminBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          errBox.innerHTML = `
+            <div class="reg-error-msg-text">
+              🔒 Enrollment <strong>${this.escapeHtml(enrollment)}</strong> already recorded an official attempt (${studentInfo.best_score ?? 0} pts).
+            </div>
+            <div class="reg-error-subtext">
+              Credentials entered twice. Admin Key Re-access has been unlocked below to authorize a replay.
+            </div>
+          `;
+          errBox.style.display = 'block';
           return;
         }
 
-        // Fallback error banner
+        // 1st time entering already-played credentials: keep hidden and prompt to re-enter
+        if (adminBox) adminBox.style.display = 'none';
         errBox.innerHTML = `
           <div class="reg-error-msg-text">
-            Enrollment <strong>${this.escapeHtml(enrollment)}</strong> already recorded a score (${studentInfo.best_score ?? 0} pts).
+            ⚠️ Single official attempt policy active. Enrollment <strong>${this.escapeHtml(enrollment)}</strong> has already recorded a score (${studentInfo.best_score ?? 0} pts).
           </div>
           <div class="reg-error-subtext">
-            Single official attempt policy active. Contact event admin to play again.
+            Re-enter or submit the same credentials again to unlock Admin Key Re-access on this page.
           </div>
-          <button type="button" class="btn-error-action" id="btn-err-admin-key">
-            <span class="btn-icon">${Icons.key(14)}</span>
-            <span>ENTER ADMIN KEY TO PLAY AGAIN</span>
-          </button>
         `;
         errBox.style.display = 'block';
-
-        const unlockBtn = errBox.querySelector('#btn-err-admin-key');
-        if (unlockBtn) {
-          unlockBtn.addEventListener('click', (ev) => {
-            ev.preventDefault();
-            sound.playClick();
-            this.openAdminReplayModal(studentInfo);
-          });
-        }
         return;
       }
 

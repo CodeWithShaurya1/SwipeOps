@@ -3561,6 +3561,23 @@ textarea {
   border-color: rgba(139, 92, 246, 0.55);
 }
 
+.admin-replay-cta-box.revealed-animation {
+  animation: adminBoxReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.25);
+  border-color: rgba(167, 139, 250, 0.7);
+}
+
+@keyframes adminBoxReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .admin-replay-cta-header {
   display: flex;
   align-items: center;
