@@ -714,6 +714,7 @@ export class StorageManager {
         student.best_score = stats.score;
         student.best_accuracy = stats.accuracy;
         student.best_correct = stats.correct;
+        student.best_streak = stats.maxStreak;
         student.best_duration_seconds = stats.duration;
         student.best_completed_at = now;
       }
@@ -800,6 +801,7 @@ export class StorageManager {
       final_score: s.best_score,
       accuracy: s.best_accuracy,
       correct_decisions: s.best_correct,
+      max_streak: s.best_streak ?? s.best_correct ?? 0,
       duration_seconds: s.best_duration_seconds,
       completed_at: s.best_completed_at,
       attempts_count: s.attempts_count,

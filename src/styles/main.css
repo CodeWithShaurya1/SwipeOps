@@ -3382,8 +3382,343 @@ body {
   .admin-tabs-nav,
   .admin-stat-card,
   .admin-controls-bar,
-  .admin-table-card {
+  .admin-table-card,
+  .techverse-lb-card {
     background-color: rgba(15, 23, 42, 0.94) !important;
   }
+}
+
+/* ==========================================================================
+   TECHVERSE OFFICIAL TOURNAMENT LEADERBOARD
+   ========================================================================== */
+
+.techverse-lb-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+  z-index: 10;
+}
+
+.techverse-lb-card {
+  width: 100%;
+  max-width: 980px;
+  background: rgba(7, 13, 24, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(0, 240, 255, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 34px 38px 28px 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Header */
+.techverse-lb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.techverse-lb-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.techverse-lb-title {
+  font-family: 'Orbitron', 'Space Grotesk', var(--font-heading), sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #00f0ff;
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.45);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.techverse-lb-standings-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.12em;
+}
+
+.techverse-dot-cyan {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 10px #00f0ff, 0 0 18px #00f0ff;
+  display: inline-block;
+  animation: pulseCyan 2s infinite ease-in-out;
+}
+
+@keyframes pulseCyan {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.techverse-lb-top-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.techverse-cloud-status-badge {
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 6px;
+}
+
+.techverse-cloud-status-badge.live {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid #22c55e;
+  color: #4ade80;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+}
+
+.techverse-cloud-status-badge.offline {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+}
+
+.techverse-btn-reset-local {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.techverse-btn-reset-local:hover {
+  border-color: rgba(244, 63, 94, 0.6);
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+}
+
+/* Table */
+.techverse-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(10, 18, 34, 0.6);
+}
+
+.techverse-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.techverse-table th {
+  padding: 13px 18px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #00f0ff;
+  border-bottom: 1.5px solid rgba(0, 240, 255, 0.25);
+  background: rgba(6, 182, 212, 0.06);
+  text-transform: uppercase;
+}
+
+.techverse-table td {
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.88rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.techverse-table tr:last-child td {
+  border-bottom: none;
+}
+
+.techverse-table tr:hover td {
+  background: rgba(0, 240, 255, 0.04);
+}
+
+.col-rank {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tv-rank-podium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.tv-rank-podium.gold {
+  color: #f59e0b;
+}
+
+.tv-rank-podium.silver {
+  color: #cbd5e1;
+}
+
+.tv-rank-podium.bronze {
+  color: #d97706;
+}
+
+.tv-rank-default {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.col-operator {
+  color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.col-enrollment {
+  color: #ec4899;
+  white-space: nowrap;
+}
+
+.tv-enrollment-text {
+  color: #ec4899;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tv-run-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(88, 28, 135, 0.5);
+  border: 1px solid #a855f7;
+  color: #d8b4fe;
+  font-weight: 800;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.col-score {
+  color: #00f0ff !important;
+  font-weight: 800;
+  font-size: 0.96rem;
+  letter-spacing: 0.04em;
+}
+
+.col-accuracy {
+  color: #e2e8f0;
+}
+
+.col-streak {
+  color: #f8fafc;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.col-date {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+/* Footer Action Buttons */
+.techverse-lb-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.techverse-lb-footer-left,
+.techverse-lb-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.techverse-btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.techverse-btn-action.next-player {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(124, 58, 237, 0.45));
+  border: 1.5px solid #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+}
+
+.techverse-btn-action.next-player:hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.55), rgba(124, 58, 237, 0.65));
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.techverse-btn-action.cloud-sync,
+.techverse-btn-action.refresh,
+.techverse-btn-action.close {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #cbd5e1;
+}
+
+.techverse-btn-action.cloud-sync:hover,
+.techverse-btn-action.refresh:hover,
+.techverse-btn-action.close:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.techverse-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #00f0ff;
+  border-radius: 50%;
+  animation: tvSpin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes tvSpin {
+  to { transform: rotate(360deg); }
 }
 

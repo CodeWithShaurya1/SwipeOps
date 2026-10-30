@@ -1,14 +1,20 @@
 /**
- * Leaderboard Component
- * Displays competitive results with Best Score Policy,
- * partially masked student enrollment numbers, tie-breaker ranking,
- * and top 3 podium treatments.
+ * TECHVERSE LEADERBOARD COMPONENT
+ * Pixel-faithful reproduction of the official TechVerse Leaderboard reference design.
+ * Features:
+ * - Orbitron Electric Cyan title: TECHVERSE LEADERBOARD
+ * - Official tournament standings status dot
+ * - [ SHARED EVENT CLOUD (LIVE) ] & [ RESET LOCAL ] header tags
+ * - Rank podium medals (🥇 1, 🥈 2, 🥉 3, #4...)
+ * - Magenta / Pink Enrollment with [ RUN #2 ] replay badges
+ * - Comma-formatted cyan scores (e.g. 2,250)
+ * - Streak with fire emoji (e.g. 4🔥)
+ * - Time formatted date column (HH:MM)
+ * - Bottom action bar: [⚡ NEXT PLAYER], [⚙ CLOUD SYNC], [🔄 REFRESH], [CLOSE]
  */
 
 import { sound } from '../systems/SoundFX.js';
 import { storage } from '../systems/StorageManager.js';
-import { maskEnrollment } from '../systems/IdentityUtils.js';
-import { Icons } from './icons.js';
 
 export class Leaderboard {
   constructor({ onBackToMenu, onStartMission, onOpenAdmin }) {
@@ -26,16 +32,29 @@ export class Leaderboard {
 
   renderLoading() {
     this.container.innerHTML = `
-      <div class="leaderboard-screen">
-        <div class="leaderboard-header">
-          <div class="leaderboard-title">
-            <div class="category-tag">Club Battle · TechVerse · DevOps Club</div>
-            <h2>SwipeOps Global Leaderboard</h2>
+      <div class="techverse-lb-screen">
+        <div class="techverse-lb-card">
+          <div class="techverse-lb-header">
+            <div class="techverse-lb-title-group">
+              <h1 class="techverse-lb-title">TECHVERSE LEADERBOARD</h1>
+              <div class="techverse-lb-standings-badge">
+                <span class="techverse-dot-cyan"></span>
+                <span>OFFICIAL TOURNAMENT STANDINGS</span>
+              </div>
+            </div>
+            <div class="techverse-lb-top-controls">
+              <div class="techverse-cloud-status-badge live">
+                [ SHARED EVENT CLOUD (LIVE) ]
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="leaderboard-card glass-surface">
-          <div class="leaderboard-empty">
-            <p>Connecting to cluster leaderboard service...</p>
+          <div class="techverse-table-container">
+            <div class="techverse-empty-row" style="padding: 60px 20px; text-align: center;">
+              <div class="techverse-spinner"></div>
+              <p style="color: #38bdf8; font-family: var(--font-mono); margin-top: 14px; letter-spacing: 0.08em; font-size: 0.85rem;">
+                FETCHING CLOUD STANDINGS FROM CLUSTER...
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -54,115 +73,111 @@ export class Leaderboard {
     if (!records || records.length === 0) {
       tableRows = `
         <tr>
-          <td colspan="7" class="leaderboard-empty" style="text-align: center; padding: 48px 24px;">
-            <div style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 8px;">No mission attempts recorded yet.</div>
-            <div style="color: var(--text-muted); font-size: 0.85rem;">Be the first on-call operator to resolve production incidents and claim Rank #1!</div>
+          <td colspan="7" class="techverse-empty-row" style="text-align: center; padding: 56px 24px;">
+            <div style="font-size: 1.1rem; color: #f8fafc; font-family: var(--font-mono); font-weight: 700; margin-bottom: 8px; letter-spacing: 0.05em;">
+              NO MISSION ATTEMPTS RECORDED YET
+            </div>
+            <div style="color: #64748b; font-family: var(--font-mono); font-size: 0.85rem;">
+              Click <strong style="color: #00f0ff;">[ ⚡ NEXT PLAYER ]</strong> to launch the first official tournament run!
+            </div>
           </td>
         </tr>
       `;
     } else {
       tableRows = records.map((entry, index) => {
         const rank = index + 1;
-        let rankClass = '';
-        let rowClass = '';
-        let badgeIcon = '';
+        let rankDisplay = '';
 
         if (rank === 1) {
-          rankClass = 'gold';
-          rowClass = 'rank-1-row';
-          badgeIcon = '👑';
+          rankDisplay = `<span class="tv-rank-podium gold"><span class="medal-icon">🥇</span> 1</span>`;
         } else if (rank === 2) {
-          rankClass = 'silver';
-          rowClass = 'rank-2-row';
-          badgeIcon = '🥈';
+          rankDisplay = `<span class="tv-rank-podium silver"><span class="medal-icon">🥈</span> 2</span>`;
         } else if (rank === 3) {
-          rankClass = 'bronze';
-          rowClass = 'rank-3-row';
-          badgeIcon = '🥉';
+          rankDisplay = `<span class="tv-rank-podium bronze"><span class="medal-icon">🥉</span> 3</span>`;
+        } else {
+          rankDisplay = `<span class="tv-rank-default">#${rank}</span>`;
         }
 
-        const maskedEnrollment = entry.enrollment_masked || maskEnrollment(entry.enrollment_number);
-        const durationText = entry.duration_seconds ? `${entry.duration_seconds}s` : '—';
+        const operatorName = this.escapeHtml(entry.student_name || entry.player_name || 'Operator');
+        const rawEnrollment = entry.enrollment_number || entry.enrollment_masked || '—';
+        const attemptsCount = Number(entry.attempts_count || 1);
+        const runBadge = attemptsCount > 1 ? `<span class="tv-run-badge">RUN #${attemptsCount}</span>` : '';
+
+        // Formatted score with commas e.g. 2,250
+        const scoreVal = Number(entry.final_score || 0);
+        const formattedScore = scoreVal.toLocaleString('en-US');
+
+        // Accuracy
+        const accuracyVal = entry.accuracy != null ? `${entry.accuracy}%` : '100%';
+
+        // Streak with fire emoji e.g. 4🔥 or 0🔥
+        const streakNum = entry.max_streak != null ? entry.max_streak : (entry.correct_decisions ?? 0);
+        const streakVal = `${streakNum}🔥`;
+
+        // Time format: HH:MM from completed_at
+        let timeStr = '10:58';
+        if (entry.completed_at) {
+          try {
+            const d = new Date(entry.completed_at);
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            timeStr = `${hours}:${mins}`;
+          } catch (_) {}
+        }
 
         return `
-          <tr class="${rowClass}">
-            <td>
-              <span class="rank-pill ${rankClass}">
-                ${badgeIcon ? `${badgeIcon} ` : ''}${rank}
-              </span>
+          <tr class="tv-table-row rank-${rank}">
+            <td class="col-rank">${rankDisplay}</td>
+            <td class="col-operator">${operatorName}</td>
+            <td class="col-enrollment">
+              <span class="tv-enrollment-text">${this.escapeHtml(rawEnrollment)}</span>
+              ${runBadge}
             </td>
-            <td style="font-weight: 700; color: var(--text-main);">
-              ${this.escapeHtml(entry.student_name || entry.player_name || 'Anonymous')}
-              ${entry.is_test ? '<span class="status-standby" style="font-size: 0.65rem; margin-left: 6px; padding: 2px 6px; border-radius: 4px;">TEST</span>' : ''}
-            </td>
-            <td class="mono text-muted" style="font-size: 0.82rem; letter-spacing: 0.05em;">
-              ${this.escapeHtml(maskedEnrollment)}
-            </td>
-            <td class="mono text-cyan" style="font-weight: 800; font-size: 1.1rem;">
-              ${entry.final_score}
-            </td>
-            <td class="mono text-green">
-              ${entry.accuracy ?? 100}%
-            </td>
-            <td class="mono text-muted">
-              ${durationText}
-            </td>
-            <td class="mono text-amber">
-              ${entry.correct_decisions ?? 0} / 3
-            </td>
+            <td class="col-score">${formattedScore}</td>
+            <td class="col-accuracy">${accuracyVal}</td>
+            <td class="col-streak">${streakVal}</td>
+            <td class="col-date">${timeStr}</td>
           </tr>
         `;
       }).join('');
     }
 
     this.container.innerHTML = `
-      <div class="leaderboard-screen">
-        <div class="leaderboard-header">
-          <div class="leaderboard-title">
-            <div class="category-tag">Club Battle · TechVerse · DevOps Club</div>
-            <h2>SwipeOps Global Leaderboard</h2>
-            <div style="font-family: var(--font-mono); font-size: 0.8rem; margin-top: 6px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <span style="display: inline-flex; align-items: center; gap: 6px;">
-                <span class="status-dot status-dot-pass"></span>
-                <span class="text-muted">Cluster Mode:</span>
-                <span class="status-pass">${isCloud ? 'Cloud Sync Active' : 'Offline Tournament Engine · Active'}</span>
-              </span>
-              <span class="text-muted">· Best Score Policy (1 Entry / Student)</span>
+      <div class="techverse-lb-screen">
+        <div class="techverse-lb-card">
+          
+          <!-- Top Header Bar -->
+          <div class="techverse-lb-header">
+            <div class="techverse-lb-title-group">
+              <h1 class="techverse-lb-title">TECHVERSE LEADERBOARD</h1>
+              <div class="techverse-lb-standings-badge">
+                <span class="techverse-dot-cyan"></span>
+                <span>OFFICIAL TOURNAMENT STANDINGS</span>
+              </div>
+            </div>
+
+            <div class="techverse-lb-top-controls">
+              <div class="techverse-cloud-status-badge ${isCloud ? 'live' : 'offline'}">
+                ${isCloud ? '[ SHARED EVENT CLOUD (LIVE) ]' : '[ LOCAL STANDALONE ENGINE ]'}
+              </div>
+              <button type="button" class="techverse-btn-reset-local" id="btn-lb-reset-local" title="Reset tournament data">
+                <span>🧹 RESET LOCAL</span>
+              </button>
             </div>
           </div>
 
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-            <button class="btn btn-secondary" id="btn-lb-refresh">
-              <span class="btn-icon">${Icons.refresh(14)}</span>
-              <span>Refresh</span>
-            </button>
-            <button class="btn btn-secondary" id="btn-lb-menu">
-              <span class="btn-icon">${Icons.arrowLeft(14)}</span>
-              <span>Menu</span>
-            </button>
-            <button class="btn btn-primary" id="btn-lb-play">
-              <span class="btn-icon">${Icons.play(14)}</span>
-              <span>Start mission</span>
-            </button>
-            <button class="btn btn-secondary" id="btn-lb-admin" style="border-color: rgba(139, 92, 246, 0.4); color: #c4b5fd;">
-              <span class="btn-icon">⚡</span>
-              <span>Admin Portal</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="leaderboard-card glass-surface">
-          <div class="table-responsive">
-            <table class="leaderboard-table">
+          <!-- Table Container -->
+          <div class="techverse-table-container">
+            <table class="techverse-table">
               <thead>
                 <tr>
-                  <th style="width: 70px;">Rank</th>
-                  <th>Operator</th>
-                  <th>Enrollment (Protected)</th>
-                  <th>Score</th>
-                  <th>Accuracy</th>
-                  <th>Duration</th>
-                  <th>Resolved</th>
+                  <th style="width: 90px;">RANK</th>
+                  <th>OPERATOR</th>
+                  <th>ENROLLMENT</th>
+                  <th>SCORE</th>
+                  <th>ACCURACY</th>
+                  <th>STREAK</th>
+                  <th>DATE</th>
                 </tr>
               </thead>
               <tbody>
@@ -170,9 +185,45 @@ export class Leaderboard {
               </tbody>
             </table>
           </div>
+
+          <!-- Bottom Action Buttons Footer -->
+          <div class="techverse-lb-footer">
+            <div class="techverse-lb-footer-left">
+              <button type="button" class="techverse-btn-action next-player" id="btn-lb-next-player">
+                <span>⚡ NEXT PLAYER</span>
+              </button>
+              <button type="button" class="techverse-btn-action cloud-sync" id="btn-lb-cloud-sync">
+                <span>⚙ CLOUD SYNC</span>
+              </button>
+            </div>
+
+            <div class="techverse-lb-footer-right">
+              <button type="button" class="techverse-btn-action refresh" id="btn-lb-refresh">
+                <span>🔄 REFRESH</span>
+              </button>
+              <button type="button" class="techverse-btn-action close" id="btn-lb-close">
+                <span>CLOSE</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
     `;
+
+    // Event listeners
+    this.container.querySelector('#btn-lb-next-player').addEventListener('click', () => {
+      sound.playClick();
+      this.onStartMission();
+    });
+
+    this.container.querySelector('#btn-lb-cloud-sync').addEventListener('click', async () => {
+      sound.playClick();
+      const syncBtn = this.container.querySelector('#btn-lb-cloud-sync');
+      syncBtn.disabled = true;
+      syncBtn.innerHTML = `<span>⚙ SYNCING...</span>`;
+      await this.loadData();
+    });
 
     this.container.querySelector('#btn-lb-refresh').addEventListener('click', async () => {
       sound.playClick();
@@ -180,25 +231,29 @@ export class Leaderboard {
       await this.loadData();
     });
 
-    this.container.querySelector('#btn-lb-menu').addEventListener('click', () => {
+    this.container.querySelector('#btn-lb-close').addEventListener('click', () => {
       sound.playClick();
       this.onBackToMenu();
     });
 
-    this.container.querySelector('#btn-lb-play').addEventListener('click', () => {
+    this.container.querySelector('#btn-lb-reset-local').addEventListener('click', async () => {
       sound.playClick();
-      this.onStartMission();
-    });
+      const pass = window.prompt('Enter Administrator Authorization Key to reset tournament records:');
+      if (!pass) return;
 
-    const adminBtn = this.container.querySelector('#btn-lb-admin');
-    if (adminBtn) {
-      adminBtn.addEventListener('click', () => {
-        sound.playClick();
-        if (typeof this.onOpenAdmin === 'function') {
-          this.onOpenAdmin();
-        }
-      });
-    }
+      const isValid = await storage.verifyAdminKey(pass);
+      if (!isValid) {
+        alert('Access Denied: Invalid Administrator Authorization Key.');
+        return;
+      }
+
+      if (window.confirm('WARNING: Are you sure you want to purge local competition records?')) {
+        await storage.resetTournamentRecords(pass);
+        alert('Tournament records successfully cleared. Ready for new attempts.');
+        this.renderLoading();
+        await this.loadData();
+      }
+    });
   }
 
   escapeHtml(str) {
