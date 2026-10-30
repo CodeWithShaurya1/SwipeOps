@@ -111,13 +111,34 @@ export class MainMenu {
           </div>
         </div>
 
-        <!-- Primary Action Callout -->
+        <!-- Primary Action Callout: Interactive Swipe Slider -->
         <div class="hero-actions">
-          <button class="btn-primary-action start-btn" id="btn-start-mission">
-            <span class="btn-primary-icon">${Icons.zap(18)}</span>
-            <span class="btn-primary-text">START MISSION</span>
-            <span class="btn-primary-arrow">${Icons.arrowRight(16)}</span>
-          </button>
+          <div class="swipe-slider-container">
+            <div 
+              class="swipe-slider-track" 
+              id="swipe-slider-track" 
+              role="slider" 
+              tabindex="0" 
+              aria-label="Swipe to start mission"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div class="swipe-slider-progress" id="swipe-slider-progress"></div>
+              <div class="swipe-slider-label" id="swipe-slider-label">
+                <span class="swipe-slider-text">SWIPE TO START MISSION</span>
+                <span class="swipe-slider-chevrons">
+                  <span class="chevron c1">❯</span>
+                  <span class="chevron c2">❯</span>
+                  <span class="chevron c3">❯</span>
+                </span>
+              </div>
+              <div class="swipe-slider-thumb" id="swipe-slider-thumb">
+                <span class="thumb-icon">${Icons.zap(20)}</span>
+              </div>
+            </div>
+            <button id="btn-start-mission" class="sr-only" aria-hidden="true" tabindex="-1"></button>
+          </div>
         </div>
 
         <!-- Cohesive Secondary Controls Bar -->
@@ -142,11 +163,17 @@ export class MainMenu {
       </div>
     `;
 
-    // Attach event listeners
-    container.querySelector('#btn-start-mission').addEventListener('click', () => {
-      sound.playClick();
-      this.onStartMission();
-    });
+    // Initialize Swipe Slider physics & interactions
+    this.setupSwipeSlider(container);
+
+    // Fallback trigger if #btn-start-mission is clicked
+    const hiddenStartBtn = container.querySelector('#btn-start-mission');
+    if (hiddenStartBtn) {
+      hiddenStartBtn.addEventListener('click', () => {
+        sound.playClick();
+        this.onStartMission();
+      });
+    }
 
     container.querySelector('#btn-how-to-play').addEventListener('click', () => {
       sound.playClick();
@@ -173,6 +200,148 @@ export class MainMenu {
       const active = sound.toggle();
       container.querySelector('#audio-icon').innerHTML = active ? Icons.volume2(15) : Icons.volumeX(15);
       container.querySelector('#audio-label').textContent = active ? 'Sound on' : 'Muted';
+    });
+  }
+
+  setupSwipeSlider(container) {
+    const track = container.querySelector('#swipe-slider-track');
+    const thumb = container.querySelector('#swipe-slider-thumb');
+    const progress = container.querySelector('#swipe-slider-progress');
+    const label = container.querySelector('#swipe-slider-label');
+    const labelText = container.querySelector('.swipe-slider-text');
+    const chevrons = container.querySelector('.swipe-slider-chevrons');
+
+    if (!track || !thumb) return;
+
+    let isDragging = false;
+    let startX = 0;
+    let currentX = 0;
+    let maxDist = 0;
+    let isCompleted = false;
+    let wasDragged = false;
+
+    const calcMaxDist = () => {
+      const trackWidth = track.clientWidth || 340;
+      const thumbWidth = thumb.clientWidth || 48;
+      return Math.max(1, trackWidth - thumbWidth - 10);
+    };
+
+    const updatePosition = (x, animated = false) => {
+      if (animated) {
+        thumb.style.transition = 'transform 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        progress.style.transition = 'width 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        label.style.transition = 'opacity 0.2s ease';
+      } else {
+        thumb.style.transition = 'none';
+        progress.style.transition = 'none';
+        label.style.transition = 'none';
+      }
+
+      thumb.style.transform = `translateX(${x}px)`;
+      progress.style.width = `${x + 28}px`;
+
+      const dist = maxDist > 0 ? maxDist : 280;
+      const pct = Math.max(0, Math.min(1, x / dist));
+      track.setAttribute('aria-valuenow', Math.round(pct * 100));
+      label.style.opacity = `${Math.max(0, 1 - pct * 1.5)}`;
+    };
+
+    const triggerComplete = () => {
+      if (isCompleted) return;
+      isCompleted = true;
+      maxDist = calcMaxDist();
+      updatePosition(maxDist, true);
+
+      track.classList.add('completed');
+      if (labelText) {
+        labelText.textContent = 'MISSION INITIATED ⚡';
+        labelText.classList.add('initiated');
+      }
+      if (chevrons) chevrons.style.display = 'none';
+
+      sound.playClick();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate([30, 50, 30]); } catch (_) {}
+      }
+
+      setTimeout(() => {
+        this.onStartMission();
+      }, 240);
+    };
+
+    const onPointerDown = (e) => {
+      if (isCompleted) return;
+      isDragging = true;
+      wasDragged = false;
+      startX = e.clientX;
+      maxDist = calcMaxDist();
+      currentX = 0;
+      thumb.classList.add('is-dragging');
+      track.classList.add('is-interacting');
+      try {
+        thumb.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging || isCompleted) return;
+      const dx = e.clientX - startX;
+      maxDist = calcMaxDist();
+      currentX = Math.max(0, Math.min(dx, maxDist));
+      if (currentX > 8) {
+        wasDragged = true;
+      }
+      updatePosition(currentX, false);
+
+      if (currentX >= maxDist * 0.82) {
+        isDragging = false;
+        thumb.classList.remove('is-dragging');
+        track.classList.remove('is-interacting');
+        triggerComplete();
+      }
+    };
+
+    const onPointerUp = (e) => {
+      if (!isDragging || isCompleted) return;
+      isDragging = false;
+      thumb.classList.remove('is-dragging');
+      track.classList.remove('is-interacting');
+      try {
+        thumb.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+
+      maxDist = calcMaxDist();
+      if (currentX >= maxDist * 0.75) {
+        triggerComplete();
+      } else {
+        currentX = 0;
+        updatePosition(0, true);
+        setTimeout(() => {
+          if (!isCompleted) {
+            thumb.style.transition = '';
+            progress.style.transition = '';
+            label.style.transition = '';
+            label.style.opacity = '1';
+          }
+        }, 280);
+      }
+    };
+
+    thumb.addEventListener('pointerdown', onPointerDown);
+    thumb.addEventListener('pointermove', onPointerMove);
+    thumb.addEventListener('pointerup', onPointerUp);
+    thumb.addEventListener('pointercancel', onPointerUp);
+
+    track.addEventListener('click', (e) => {
+      if (isCompleted || wasDragged) return;
+      triggerComplete();
+    });
+
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        triggerComplete();
+      }
     });
   }
 }
