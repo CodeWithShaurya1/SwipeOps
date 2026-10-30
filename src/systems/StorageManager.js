@@ -22,8 +22,8 @@ const DEFAULT_ADMIN_PASSPHRASE = 'devops2026';
 export class StorageManager {
   constructor() {
     const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
-    this.supabaseUrl = env.VITE_SUPABASE_URL || '';
-    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || '';
+    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     this.adminPassphrase = env.VITE_ADMIN_PASSPHRASE || DEFAULT_ADMIN_PASSPHRASE;
 
     this.supabase = null;
