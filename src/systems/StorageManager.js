@@ -1046,6 +1046,21 @@ export class StorageManager {
     return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
+  /**
+   * Reset tournament data for a clean competition run (Admin only)
+   */
+  async adminResetAllData(adminName = 'Lead SRE Admin') {
+    this._saveLocal(LOCAL_STUDENTS_KEY, []);
+    this._saveLocal(LOCAL_ATTEMPTS_KEY, []);
+    this._saveLocal(LOCAL_REPLAYS_KEY, []);
+    this._saveLocal(LEGACY_STORAGE_KEY, []);
+    this._saveLocal(SUBMITTED_SESSIONS_KEY, []);
+
+    this._appendAuditLog('EVENT_DATA_RESET', adminName, 'ALL_STUDENTS', 'Organizer initiated full tournament data reset for new competition session');
+
+    return { success: true, message: 'All local tournament data reset. Ready for new competition.' };
+  }
+
   _appendAuditLog(action, adminName, targetEnrollment, reason, details = {}) {
     const logs = this._getLocal(LOCAL_AUDIT_LOG_KEY);
     const entry = {

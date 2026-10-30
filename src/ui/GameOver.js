@@ -224,8 +224,8 @@ export class GameOver {
         badge.textContent = 'SAVED TO CLOUD LEADERBOARD';
         badge.className = 'status-pass';
       } else {
-        badge.textContent = 'SAVED LOCALLY (STANDALONE)';
-        badge.className = 'status-standby';
+        badge.textContent = 'OFFICIAL SCORE RECORDED';
+        badge.className = 'status-pass';
       }
     }
 

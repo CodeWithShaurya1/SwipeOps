@@ -123,9 +123,9 @@ export class Leaderboard {
             <h2>SwipeOps Global Leaderboard</h2>
             <div style="font-family: var(--font-mono); font-size: 0.8rem; margin-top: 6px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <span style="display: inline-flex; align-items: center; gap: 6px;">
-                <span class="status-dot ${isCloud ? 'status-dot-pass' : 'status-dot-standby'}"></span>
-                <span class="text-muted">Source:</span>
-                <span class="${isCloud ? 'status-pass' : 'status-standby'}">${isCloud ? 'Supabase Cloud Sync' : 'Local Standalone Mode'}</span>
+                <span class="status-dot status-dot-pass"></span>
+                <span class="text-muted">Cluster Mode:</span>
+                <span class="status-pass">${isCloud ? 'Cloud Sync Active' : 'Offline Tournament Engine · Active'}</span>
               </span>
               <span class="text-muted">· Best Score Policy (1 Entry / Student)</span>
             </div>

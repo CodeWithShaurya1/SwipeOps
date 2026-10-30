@@ -154,6 +154,9 @@ export class AdminDashboard {
           </div>
 
           <div class="admin-topbar-actions">
+            <button class="btn btn-secondary btn-sm" id="btn-admin-reset" style="border-color: rgba(244, 63, 94, 0.4); color: var(--accent-rose);" title="Reset event records for fresh competition">
+              <span>🧹 Reset Data</span>
+            </button>
             <button class="btn btn-secondary btn-sm" id="btn-admin-refresh">
               <span class="btn-icon">${Icons.refresh(13)}</span>
               <span>Refresh</span>
@@ -211,6 +214,19 @@ export class AdminDashboard {
       sound.playClick();
       this.loadActiveTab();
     });
+
+    const resetBtn = this.container.querySelector('#btn-admin-reset');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        sound.playClick();
+        if (confirm('Are you sure you want to reset all tournament records? This clears all registered students, attempts, and replays so you can start a fresh competition.')) {
+          storage.adminResetAllData(this.currentAdmin).then(() => {
+            alert('Tournament records successfully reset. Ready for new registrations.');
+            this.loadActiveTab();
+          });
+        }
+      });
+    }
 
     this.container.querySelector('#btn-admin-exit').addEventListener('click', () => {
       sound.playClick();
