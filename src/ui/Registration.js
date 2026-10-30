@@ -4,20 +4,25 @@
  * - Left pane: Mission briefing and cluster readiness telemetry
  * - Right pane: Refined dark glassmorphic card with clean inputs and instant validation
  * - Clear confirmation screen with session credentials before countdown
+ * - Official One-Attempt Enforcement & "YOU HAVE ALREADY PLAYED!" modal view
  */
 
 import { sound } from '../systems/SoundFX.js';
 import { storage } from '../systems/StorageManager.js';
+import { normalizeName, normalizeEnrollment } from '../systems/IdentityUtils.js';
 import { Icons } from './icons.js';
 
 export class Registration {
-  constructor({ onReadyToLaunch, onBackToMenu }) {
+  constructor({ onReadyToLaunch, onBackToMenu, onViewLeaderboard }) {
     this.onReadyToLaunch = onReadyToLaunch;
     this.onBackToMenu = onBackToMenu;
+    this.onViewLeaderboard = onViewLeaderboard;
     this.playerData = null;
+    this.container = null;
   }
 
   async render(container) {
+    this.container = container;
     const conn = await storage.testCloudConnection();
 
     container.innerHTML = `
@@ -52,8 +57,12 @@ export class Registration {
                   <span class="spec-val text-violet">3 incidents · 45 seconds</span>
                 </div>
                 <div class="spec-row">
+                  <span class="spec-key">Tournament rule</span>
+                  <span class="spec-val text-amber">1 Official Attempt per Student</span>
+                </div>
+                <div class="spec-row">
                   <span class="spec-key">Scoring engine</span>
-                  <span class="spec-val text-green">100 pts + 50 streak bonus</span>
+                  <span class="spec-val text-green">100 pts + 50 streak bonus (Max 350)</span>
                 </div>
               </div>
             </div>
@@ -66,7 +75,7 @@ export class Registration {
                 <div class="reg-card-tag">Operator credentials</div>
                 <h2 class="reg-card-title">Register for SwipeOps</h2>
                 <p class="reg-card-subtitle">
-                  Authenticate your callsign for the TechVerse leaderboard.
+                  Authenticate your enrollment identifier for the TechVerse leaderboard.
                 </p>
               </div>
 
@@ -79,7 +88,7 @@ export class Registration {
               <form id="reg-form" novalidate>
                 <div class="reg-form-group">
                   <label class="reg-label" for="reg-name">
-                    <span>Callsign / Full name</span>
+                    <span>Full name</span>
                     <span class="req-star">*</span>
                   </label>
                   <div class="input-wrapper">
@@ -152,53 +161,152 @@ export class Registration {
       sound.playClick();
       errBox.style.display = 'none';
 
-      const name = nameInput.value.trim();
-      const enrollment = enrollInput.value.trim().toUpperCase();
+      const name = normalizeName(nameInput.value);
+      const enrollment = normalizeEnrollment(enrollInput.value);
 
       if (!name || name.length < 2) {
-        errBox.textContent = 'Please enter a valid callsign or name (minimum 2 characters).';
+        errBox.textContent = 'Please enter a valid full name (minimum 2 characters).';
         errBox.style.display = 'block';
         return;
       }
 
       if (!enrollment || enrollment.length < 4) {
-        errBox.textContent = 'Please enter a valid enrollment number.';
+        errBox.textContent = 'Please enter a valid enrollment number (minimum 4 characters).';
         errBox.style.display = 'block';
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<span>Verifying cluster access...</span>`;
+      submitBtn.innerHTML = `<span>Verifying official eligibility...</span>`;
 
       // Check official one-attempt eligibility rule
-      const check = await storage.checkEnrollmentEligibility(enrollment);
+      const check = await storage.checkStudentStatus(enrollment);
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<span>Verify &amp; enter</span><span class="btn-icon">${Icons.arrowRight(15)}</span>`;
+
+      if (!check.eligible && check.status === 'ALREADY_PLAYED') {
+        // Render explicit "YOU HAVE ALREADY PLAYED!" screen
+        this.renderAlreadyPlayed(container, check.student || { enrollment_number: enrollment, student_name: name });
+        return;
+      }
 
       if (!check.eligible) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>Verify &amp; enter</span><span class="btn-icon">${Icons.arrowRight(15)}</span>`;
-        errBox.textContent = check.message;
+        errBox.textContent = check.message || 'Enrollment is not eligible for entry.';
         errBox.style.display = 'block';
         return;
       }
 
-      this.playerData = { name, enrollment };
+      // If existing student registered with a previous name, use registered student name
+      const studentName = (check.student && check.student.student_name) ? check.student.student_name : name;
+
+      this.playerData = {
+        name: studentName,
+        enrollment,
+        isReplay: check.status === 'REPLAY_AUTHORIZED',
+        resumed: check.status === 'ACTIVE_ATTEMPT'
+      };
+
       this.renderConfirmation(container);
     });
   }
 
+  /**
+   * Dedicated Blocking View: YOU HAVE ALREADY PLAYED!
+   */
+  renderAlreadyPlayed(container, student) {
+    container.innerHTML = `
+      <div class="registration-view">
+        <div class="reg-card glass-surface already-played-card" style="max-width: 560px; margin: 40px auto; text-align: center; border-color: rgba(244, 63, 94, 0.4);">
+          <div class="already-played-icon" style="display: inline-flex; width: 64px; height: 64px; border-radius: 50%; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); align-items: center; justify-content: center; color: var(--accent-rose); margin-bottom: 16px;">
+            ${Icons.shield(32)}
+          </div>
+
+          <div class="event-badge" style="margin-bottom: 12px; background: rgba(244, 63, 94, 0.15); border-color: rgba(244, 63, 94, 0.3);">
+            <span class="badge-dot" style="background: var(--accent-rose); box-shadow: 0 0 8px var(--accent-rose);"></span>
+            <span style="color: var(--accent-rose);">Single official attempt policy</span>
+          </div>
+
+          <h2 class="reg-hero-title" style="font-size: 2.2rem; color: #fff; margin-bottom: 12px; letter-spacing: 0.05em;">
+            YOU HAVE ALREADY PLAYED!
+          </h2>
+
+          <p class="already-played-desc" style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; margin-bottom: 24px;">
+            "Your official attempt has already been recorded. Please contact the event administrator if you require another attempt."
+          </p>
+
+          <div class="conf-dossier-panel" style="margin-bottom: 24px; text-align: left;">
+            <div class="spec-row">
+              <span class="spec-key">Registered Student</span>
+              <span class="spec-val text-cyan">${this.escapeHtml(student.student_name || 'Operator')}</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Enrollment Number</span>
+              <span class="spec-val mono">${this.escapeHtml(student.enrollment_number)}</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Recorded Best Score</span>
+              <span class="spec-val text-green mono" style="font-weight: 800;">${student.best_score ?? 0} pts</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Attempts Used</span>
+              <span class="spec-val text-amber mono">${student.attempts_count ?? 1}</span>
+            </div>
+          </div>
+
+          <div class="reg-actions-row" style="justify-content: center; gap: 14px;">
+            <button class="btn btn-secondary" id="btn-played-menu">
+              <span class="btn-icon">${Icons.arrowLeft(15)}</span>
+              <span>Return to Menu</span>
+            </button>
+            <button class="btn btn-primary" id="btn-played-lb">
+              <span class="btn-icon">${Icons.trophy(15)}</span>
+              <span>Public Leaderboard</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.querySelector('#btn-played-menu').addEventListener('click', () => {
+      sound.playClick();
+      this.onBackToMenu();
+    });
+
+    container.querySelector('#btn-played-lb').addEventListener('click', () => {
+      sound.playClick();
+      if (typeof this.onViewLeaderboard === 'function') {
+        this.onViewLeaderboard();
+      } else {
+        this.onBackToMenu();
+      }
+    });
+  }
+
   renderConfirmation(container) {
+    const isReplay = this.playerData.isReplay;
+    const isResumed = this.playerData.resumed;
+
+    let badgeText = 'Credentials verified · Ready for duty';
+    if (isReplay) badgeText = '⚡ Admin Replay Authorized';
+    if (isResumed) badgeText = '⚠️ Active Attempt Resumed';
+
     container.innerHTML = `
       <div class="registration-view">
         <div class="reg-card confirmation-card glass-surface">
           <div class="conf-badge-icon">${Icons.shield(28)}</div>
-          <div class="event-badge" style="margin-bottom: 12px;">
-            <span class="badge-dot"></span>
-            <span>Credentials verified · Ready for duty</span>
+          <div class="event-badge" style="margin-bottom: 12px; ${isReplay ? 'border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.12);' : ''}">
+            <span class="badge-dot" style="${isReplay ? 'background: #f59e0b; box-shadow: 0 0 8px #f59e0b;' : ''}"></span>
+            <span style="${isReplay ? 'color: #f59e0b;' : ''}">${badgeText}</span>
           </div>
 
-          <h2 class="reg-hero-title" style="font-size: 2rem; margin-bottom: 8px;">Operator cleared</h2>
+          <h2 class="reg-hero-title" style="font-size: 2rem; margin-bottom: 8px;">
+            ${isReplay ? 'Replay Clearance Granted' : 'Operator cleared'}
+          </h2>
           <p class="text-muted" style="margin-bottom: 24px;">
-            Your cluster session is provisioned. The mission clock begins immediately upon launch.
+            ${isReplay 
+              ? 'Administrator has approved this replay attempt. Best Score Policy applies.' 
+              : 'Your cluster session is provisioned. The mission clock begins immediately upon launch.'}
           </p>
 
           <div class="conf-dossier-panel">
@@ -214,7 +322,15 @@ export class Registration {
               <span class="spec-key">Mission window</span>
               <span class="spec-val text-green">3 rounds · 15s each (45s total)</span>
             </div>
+            ${isReplay ? `
+              <div class="spec-row">
+                <span class="spec-key">Authorization</span>
+                <span class="spec-val text-amber">Admin Authorized Replay</span>
+              </div>
+            ` : ''}
           </div>
+
+          <div id="launch-error-banner" class="reg-error-banner" style="display: none; margin-bottom: 16px;"></div>
 
           <div class="reg-actions-row">
             <button class="btn btn-secondary" id="btn-conf-back">
@@ -234,8 +350,42 @@ export class Registration {
       this.render(container);
     });
 
-    container.querySelector('#btn-conf-launch').addEventListener('click', () => {
+    const launchBtn = container.querySelector('#btn-conf-launch');
+    const launchErr = container.querySelector('#launch-error-banner');
+
+    launchBtn.addEventListener('click', async () => {
       sound.playClick();
+      launchBtn.disabled = true;
+      launchBtn.innerHTML = `<span>Reserving cluster attempt...</span>`;
+      launchErr.style.display = 'none';
+
+      // Atomically reserve attempt in database / local store
+      const attemptRes = await storage.startAttempt(this.playerData.name, this.playerData.enrollment);
+
+      if (!attemptRes.success || !attemptRes.allowed) {
+        launchBtn.disabled = false;
+        launchBtn.innerHTML = `<span>Launch rescue mission</span><span class="btn-icon">${Icons.rocket(16)}</span>`;
+
+        if (attemptRes.error === 'ALREADY_PLAYED') {
+          this.renderAlreadyPlayed(container, {
+            student_name: attemptRes.studentName || this.playerData.name,
+            enrollment_number: this.playerData.enrollment,
+            best_score: attemptRes.bestScore,
+            attempts_count: attemptRes.attemptsUsed
+          });
+          return;
+        }
+
+        launchErr.textContent = attemptRes.message || 'Unable to reserve mission attempt.';
+        launchErr.style.display = 'block';
+        return;
+      }
+
+      // Proceed with active attempt ID
+      this.playerData.attemptId = attemptRes.attemptId;
+      this.playerData.attemptNumber = attemptRes.attemptNumber;
+      this.playerData.isReplay = attemptRes.isReplay;
+
       this.onReadyToLaunch(this.playerData);
     });
   }

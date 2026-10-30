@@ -1,6 +1,8 @@
 /**
- * DEVOPS ARENA — Main Application Entry Point
- * Manages screen routing and mission lifecycle state.
+ * SWIPEOPS — Main Application Entry Point
+ * Event: Club Battle: TechVerse | Organizing Club: DevOps Club
+ * Manages screen routing, session state, one-attempt enforcement,
+ * refresh resilience, and administrative access.
  */
 
 import './styles/main.css';
@@ -9,6 +11,7 @@ import { Registration } from './ui/Registration.js';
 import { MissionScreen } from './ui/MissionScreen.js';
 import { GameOver } from './ui/GameOver.js';
 import { Leaderboard } from './ui/Leaderboard.js';
+import { AdminDashboard } from './ui/AdminDashboard.js';
 import { HowToPlayModal } from './ui/HowToPlayModal.js';
 
 import { IncidentEngine } from './systems/IncidentEngine.js';
@@ -16,6 +19,8 @@ import { ScoringEngine } from './systems/ScoringEngine.js';
 import { ProductionState } from './systems/ProductionState.js';
 import { MissionTimer } from './systems/MissionTimer.js';
 import { devopsBg } from './systems/DevOpsBackground.js';
+
+const ACTIVE_MISSION_SESSION_KEY = 'swipeops_active_mission';
 
 class GameApp {
   constructor() {
@@ -33,7 +38,43 @@ class GameApp {
   init() {
     // Mount living animated DevOps background canvas
     devopsBg.mount();
+
+    // Check if an active attempt was interrupted by a browser refresh
+    const savedSession = this.getSavedActiveSession();
+    if (savedSession && savedSession.playerData && savedSession.playerData.attemptId) {
+      this.playerData = savedSession.playerData;
+      // Resume the active attempt
+      this.startMission(true);
+      return;
+    }
+
     this.showMainMenu();
+  }
+
+  getSavedActiveSession() {
+    try {
+      const data = sessionStorage.getItem(ACTIVE_MISSION_SESSION_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  saveActiveSession() {
+    try {
+      if (this.playerData && this.playerData.attemptId) {
+        sessionStorage.setItem(ACTIVE_MISSION_SESSION_KEY, JSON.stringify({
+          playerData: this.playerData,
+          startedAt: Date.now()
+        }));
+      }
+    } catch (_) {}
+  }
+
+  clearActiveSession() {
+    try {
+      sessionStorage.removeItem(ACTIVE_MISSION_SESSION_KEY);
+    } catch (_) {}
   }
 
   showMainMenu() {
@@ -42,7 +83,8 @@ class GameApp {
     const menu = new MainMenu({
       onStartMission: () => this.showRegistration(),
       onHowToPlay: () => HowToPlayModal.show(),
-      onLeaderboard: () => this.showLeaderboard()
+      onLeaderboard: () => this.showLeaderboard(),
+      onOpenAdmin: () => this.showAdminDashboard()
     });
     menu.render(this.appContainer);
     this.activeScreen = menu;
@@ -56,17 +98,21 @@ class GameApp {
         this.playerData = playerData;
         this.startMission();
       },
-      onBackToMenu: () => this.showMainMenu()
+      onBackToMenu: () => this.showMainMenu(),
+      onViewLeaderboard: () => this.showLeaderboard()
     });
     registration.render(this.appContainer);
     this.activeScreen = registration;
   }
 
-  startMission() {
+  startMission(isResumed = false) {
     this.teardownActive();
     devopsBg.setScreenMode('gameplay');
 
-    // Instantiate fresh, decoupled systems for this mission session
+    // Save active attempt to session storage to guard against accidental browser refresh
+    this.saveActiveSession();
+
+    // Instantiate fresh systems for this mission session
     this.incidentEngine = new IncidentEngine();
     this.incidentEngine.prepareMission();
 
@@ -95,6 +141,9 @@ class GameApp {
   }
 
   showGameOver() {
+    // Clear active mission session so returning student cannot replay without clearance
+    this.clearActiveSession();
+
     const scoringStats = this.scoringEngine.getStats();
     const healthMetrics = this.productionState.getMetrics();
     const missionDuration = this.missionTimer.getMissionElapsed();
@@ -108,9 +157,14 @@ class GameApp {
       healthMetrics,
       missionDuration,
       onViewLeaderboard: () => this.showLeaderboard(),
-      onPlayAgain: () => this.startMission(),
-      onNextPlayer: () => this.showRegistration(),
-      onReturnToMenu: () => this.showMainMenu()
+      onNextPlayer: () => {
+        this.playerData = null;
+        this.showRegistration();
+      },
+      onReturnToMenu: () => {
+        this.playerData = null;
+        this.showMainMenu();
+      }
     });
 
     gameOver.mount(this.appContainer);
@@ -122,10 +176,21 @@ class GameApp {
     devopsBg.setScreenMode('leaderboard');
     const leaderboard = new Leaderboard({
       onBackToMenu: () => this.showMainMenu(),
-      onStartMission: () => this.showRegistration()
+      onStartMission: () => this.showRegistration(),
+      onOpenAdmin: () => this.showAdminDashboard()
     });
     leaderboard.mount(this.appContainer);
     this.activeScreen = leaderboard;
+  }
+
+  showAdminDashboard() {
+    this.teardownActive();
+    devopsBg.setScreenMode('menu');
+    const admin = new AdminDashboard({
+      onClose: () => this.showMainMenu()
+    });
+    admin.mount(this.appContainer);
+    this.activeScreen = admin;
   }
 
   teardownActive() {

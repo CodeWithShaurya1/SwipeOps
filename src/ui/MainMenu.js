@@ -8,10 +8,11 @@ import { sound } from '../systems/SoundFX.js';
 import { Icons } from './icons.js';
 
 export class MainMenu {
-  constructor({ onStartMission, onHowToPlay, onLeaderboard }) {
+  constructor({ onStartMission, onHowToPlay, onLeaderboard, onOpenAdmin }) {
     this.onStartMission = onStartMission;
     this.onHowToPlay = onHowToPlay;
     this.onLeaderboard = onLeaderboard;
+    this.onOpenAdmin = onOpenAdmin;
   }
 
   render(container) {
@@ -133,6 +134,10 @@ export class MainMenu {
             <span class="btn-icon" id="audio-icon">${isSoundOn ? Icons.volume2(15) : Icons.volumeX(15)}</span>
             <span id="audio-label">${isSoundOn ? 'Sound on' : 'Muted'}</span>
           </button>
+          <button class="btn btn-secondary admin-portal-btn" id="btn-admin-portal" title="Restricted Event Organizer Console" style="border-color: rgba(139, 92, 246, 0.4); color: #c4b5fd;">
+            <span class="btn-icon">⚡</span>
+            <span>Admin</span>
+          </button>
         </div>
       </div>
     `;
@@ -152,6 +157,16 @@ export class MainMenu {
       sound.playClick();
       this.onLeaderboard();
     });
+
+    const adminBtn = container.querySelector('#btn-admin-portal');
+    if (adminBtn) {
+      adminBtn.addEventListener('click', () => {
+        sound.playClick();
+        if (typeof this.onOpenAdmin === 'function') {
+          this.onOpenAdmin();
+        }
+      });
+    }
 
     const audioBtn = container.querySelector('#btn-toggle-audio');
     audioBtn.addEventListener('click', () => {

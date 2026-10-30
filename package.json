@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node test/multi_round_progression.test.js && node test/game_engine.test.js && node test/timer_countdown.test.js && node test/tinder_swipe_deck.test.js"
+    "test": "node test/multi_round_progression.test.js && node test/game_engine.test.js && node test/timer_countdown.test.js && node test/tinder_swipe_deck.test.js && node test/event_management_and_admin.test.js"
   },
   "devDependencies": {
     "vite": "^8.3.5"

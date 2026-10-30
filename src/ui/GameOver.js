@@ -4,13 +4,15 @@
  * - Animated final score reveal
  * - Round scorecard (3/3 completed)
  * - Final production health vitals
- * - Real-time cloud/local leaderboard submission
+ * - Real-time cloud/local leaderboard submission with Best Score Policy
  * - Confetti celebration on strong or perfect runs (350 pts)
+ * - Single Official Attempt Enforcement (No direct Play Again loophole)
  */
 
 import confetti from 'canvas-confetti';
 import { sound } from '../systems/SoundFX.js';
 import { storage } from '../systems/StorageManager.js';
+import { maskEnrollment } from '../systems/IdentityUtils.js';
 import { Icons } from './icons.js';
 
 export class GameOver {
@@ -21,8 +23,7 @@ export class GameOver {
     missionDuration,
     onViewLeaderboard,
     onNextPlayer,
-    onReturnToMenu,
-    onPlayAgain
+    onReturnToMenu
   }) {
     this.playerData = playerData;
     this.scoringStats = scoringStats;
@@ -31,10 +32,9 @@ export class GameOver {
     this.onViewLeaderboard = onViewLeaderboard;
     this.onNextPlayer = onNextPlayer;
     this.onReturnToMenu = onReturnToMenu;
-    this.onPlayAgain = onPlayAgain || onNextPlayer;
 
-    this.sessionId = `session_${playerData.enrollment}_${Date.now()}`;
-    this.syncStatus = 'SYNCING SCORE...';
+    this.syncStatus = 'SYNCING OFFICIAL SCORE...';
+    this.bestScoreNotice = '';
   }
 
   async mount(container) {
@@ -72,10 +72,12 @@ export class GameOver {
             <span class="big-score-label">Final Score · Max 350 pts</span>
           </div>
 
+          <div id="best-score-badge-slot" style="margin-bottom: 12px; display: none;"></div>
+
           <!-- Operator Details -->
           <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px;">
             Operator: <span class="text-main" style="font-weight: 700;">${this.escapeHtml(this.playerData.name)}</span> ·
-            Enrollment: <span class="text-cyan">${this.escapeHtml(this.playerData.enrollment)}</span> ·
+            Enrollment: <span class="text-cyan">${this.escapeHtml(maskEnrollment(this.playerData.enrollment))}</span> ·
             Status: <span id="sync-status-badge" class="status-standby">${this.syncStatus}</span>
           </div>
 
@@ -128,17 +130,13 @@ export class GameOver {
               <span class="btn-icon">${Icons.trophy(15)}</span>
               <span>View Leaderboard</span>
             </button>
-            <button class="btn btn-secondary" id="btn-results-playagain">
-              <span class="btn-icon">${Icons.refresh(15)}</span>
-              <span>Play Again</span>
-            </button>
             <button class="btn btn-secondary" id="btn-results-next">
               <span class="btn-icon">${Icons.user(15)}</span>
               <span>Next Player</span>
             </button>
             <button class="btn btn-secondary" id="btn-results-menu">
               <span class="btn-icon">${Icons.arrowLeft(15)}</span>
-              <span>Menu</span>
+              <span>Main Menu</span>
             </button>
           </div>
         </div>
@@ -148,11 +146,6 @@ export class GameOver {
     this.container.querySelector('#btn-results-leaderboard').addEventListener('click', () => {
       sound.playClick();
       this.onViewLeaderboard();
-    });
-
-    this.container.querySelector('#btn-results-playagain').addEventListener('click', () => {
-      sound.playClick();
-      this.onPlayAgain();
     });
 
     this.container.querySelector('#btn-results-next').addEventListener('click', () => {
@@ -212,8 +205,6 @@ export class GameOver {
 
   async submitAndFetchRank() {
     const record = {
-      sessionId: this.sessionId,
-      playerName: this.playerData.name,
       enrollment: this.playerData.enrollment,
       finalScore: this.scoringStats.score,
       correct: this.scoringStats.correct,
@@ -224,8 +215,9 @@ export class GameOver {
       missionDuration: this.missionDuration
     };
 
-    const res = await storage.submitScore(record);
+    const res = await storage.completeAttempt(this.playerData.attemptId, record);
     const badge = this.container.querySelector('#sync-status-badge');
+    const bestSlot = this.container.querySelector('#best-score-badge-slot');
 
     if (badge) {
       if (res.cloudSaved) {
@@ -234,6 +226,16 @@ export class GameOver {
       } else {
         badge.textContent = 'SAVED LOCALLY (STANDALONE)';
         badge.className = 'status-standby';
+      }
+    }
+
+    if (bestSlot) {
+      if (res.isNewBest) {
+        bestSlot.innerHTML = `<span class="status-pass" style="font-family: var(--font-mono); font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; background: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.4);">★ NEW BEST TOURNAMENT SCORE!</span>`;
+        bestSlot.style.display = 'block';
+      } else if (res.bestScore > record.finalScore) {
+        bestSlot.innerHTML = `<span class="status-standby" style="font-family: var(--font-mono); font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4);">BEST SCORE MAINTAINED (${res.bestScore} PTS)</span>`;
+        bestSlot.style.display = 'block';
       }
     }
   }

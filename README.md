@@ -40,6 +40,8 @@ An adrenaline-pumping, Tinder-style incident response game built for **Club Batt
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
+- [Event Management & Tournament Rules](#-event-management--tournament-rules)
+- [Private Admin Dashboard](#-private-admin-dashboard)
 - [Game Mechanics](#-game-mechanics)
 - [Scoring & Streak System](#-scoring--streak-system)
 - [Production Health Telemetry](#-production-health-telemetry)
@@ -80,6 +82,43 @@ Players face a dynamic deck of real-world infrastructure failures. Using fluid *
 
 ---
 
+## 🛡️ Event Management & Tournament Rules
+
+SwipeOps is equipped with a university/college event management backend built for **Club Battle: TechVerse**:
+
+1. **One Official Attempt Per Student**:
+   - Enrollment numbers are sanitized, converted to uppercase, and stripped of whitespace to serve as the immutable student identifier.
+   - Returning students are immediately blocked with:
+     > **YOU HAVE ALREADY PLAYED!**  
+     > *"Your official attempt has already been recorded. Please contact the event administrator if you require another attempt."*
+2. **Refresh & Multi-Device Protection**:
+   - Attempts are reserved in the database upon launch with state `started`.
+   - Browser refreshes restore active attempts without generating duplicate attempts or resetting timer/score.
+3. **Admin-Authorized Replay Clearance**:
+   - Students cannot self-authorize replays. Replays can only be authorized via the private administrator console with a logged confirmation, mandatory reason, and admin call-sign.
+   - Replays are atomically consumed on launch.
+4. **Best Score Policy on Public Leaderboard**:
+   - Only **one** entry per student appears on the public leaderboard.
+   - A lower replay score never replaces a student's higher score; higher replay scores immediately elevate ranking.
+5. **Privacy Masking & Tie-Breakers**:
+   - Student enrollments are partially masked (e.g., `0101****1045`) on the public screen.
+   - Rankings are determined by: (1) Final Score DESC, (2) Accuracy DESC, (3) Completion Duration ASC, (4) Submission Timestamp ASC.
+
+---
+
+## ⚡ Private Admin Dashboard
+
+Accessible via **⚡ Admin** / **Admin Portal** with secure passphrase authentication (`devops2026`):
+
+- **Overview Statistics**: Live count of registered players, completed attempts, active runs, authorized replays, used replays, and tournament high score.
+- **Registered Players**: Searchable and filterable table with full history inspection and one-click replay granting.
+- **Attempt History**: Complete chronological ledger of every official and replay run.
+- **Replay Management**: Grant authorizations with reasons, revoke unused authorizations, and audit timestamps.
+- **Leaderboard Management**: Real-time ranking audit with test record filtering.
+- **Admin Activity Log**: Append-only, immutable audit trail of all organizer actions.
+
+---
+
 ## 🌟 Key Features
 
 ### 1. Tactile Dating-App-Style Card Deck
@@ -97,7 +136,7 @@ Players face a dynamic deck of real-world infrastructure failures. Using fluid *
 - **Peripheral Conduits**: Edge pipeline conduits with traveling telemetry packets along screen borders.
 - **Interactive Shockwaves**: Emerald pulse rings on successful resolutions and coral alert waves on incident failures.
 
-### 4. Real-Time Cloud Leaderboard
+### 4. Real-Time Cloud Leaderboard & Standalone Fallback
 - **Supabase Integration**: Instant synchronization of player scores, streaks, and accuracy metrics.
 - **Offline Resilient**: Automatic fallback to local storage mode if offline, with seamless sync status indicators.
 
