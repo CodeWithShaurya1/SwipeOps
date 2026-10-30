@@ -27,7 +27,7 @@ export class MainMenu {
 
         <!-- Editorial Hero Title & Clear Narrative Hierarchy -->
         <div class="hero-header-block">
-          <h1 class="hero-title">SWIPE<span class="highlight-cyan">OPS</span></h1>
+          <h1 class="hero-title"><span class="brand-swipe">SWIPE</span><span class="brand-ops highlight-cyan">OPS</span></h1>
           <p class="hero-subtitle">The Production Rescue Mission</p>
           <p class="hero-tagline">
             Three critical incidents. 45 seconds. Can you keep the cluster online?
