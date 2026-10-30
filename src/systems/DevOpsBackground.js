@@ -92,9 +92,10 @@ export class DevOpsBackground {
   setScreenMode(mode = 'menu') {
     this.screenMode = mode;
     // Update stream opacities smoothly for the active screen
+    const isRestricted = mode === 'restricted';
     const isContentHeavy = mode === 'registration' || mode === 'gameplay';
-    const centerTarget = mode === 'menu' ? 0.44 : (isContentHeavy ? 0.25 : 0.35);
-    const edgeTarget = mode === 'menu' ? 0.92 : (isContentHeavy ? 0.65 : 0.80);
+    const centerTarget = isRestricted ? 0.10 : (mode === 'menu' ? 0.44 : (isContentHeavy ? 0.25 : 0.35));
+    const edgeTarget = isRestricted ? 0.28 : (mode === 'menu' ? 0.92 : (isContentHeavy ? 0.65 : 0.80));
 
     this.columns.forEach(col => {
       col.opacityMultiplier = col.isCenterZone ? centerTarget : edgeTarget;

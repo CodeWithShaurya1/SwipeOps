@@ -14,10 +14,11 @@ import { MissionLockedModal } from './MissionLockedModal.js';
 import { Icons } from './icons.js';
 
 export class Registration {
-  constructor({ onReadyToLaunch, onBackToMenu, onViewLeaderboard }) {
+  constructor({ onReadyToLaunch, onBackToMenu, onViewLeaderboard, onAccessRestricted }) {
     this.onReadyToLaunch = onReadyToLaunch;
     this.onBackToMenu = onBackToMenu;
     this.onViewLeaderboard = onViewLeaderboard;
+    this.onAccessRestricted = onAccessRestricted;
     this.playerData = null;
     this.container = null;
   }
@@ -187,18 +188,16 @@ export class Registration {
       submitBtn.innerHTML = `<span>Verify &amp; enter</span><span class="btn-icon">${Icons.arrowRight(15)}</span>`;
 
       if (!check.eligible && check.status === 'ALREADY_PLAYED') {
-        const studentInfo = check.student || { enrollment_number: enrollment, student_name: name };
-        const modal = new MissionLockedModal({
-          student: studentInfo,
-          onUnlocked: (clearance) => {
-            this.playerData = clearance;
-            this.renderConfirmation(container);
-          },
-          onReturnHome: () => {
-            this.onBackToMenu();
-          }
-        });
-        modal.show();
+        const studentInfo = check.student || {
+          enrollment_number: enrollment,
+          student_name: name,
+          best_score: check.bestScore || 0
+        };
+        if (typeof this.onAccessRestricted === 'function') {
+          this.onAccessRestricted(studentInfo);
+        } else {
+          this.renderAlreadyPlayed(container, studentInfo);
+        }
         return;
       }
 
@@ -381,20 +380,14 @@ export class Registration {
           const studentInfo = {
             student_name: attemptRes.studentName || this.playerData.name,
             enrollment_number: this.playerData.enrollment,
-            best_score: attemptRes.bestScore,
-            attempts_count: attemptRes.attemptsUsed
+            best_score: attemptRes.bestScore || 0,
+            attempts_count: attemptRes.attemptsUsed || 1
           };
-          const modal = new MissionLockedModal({
-            student: studentInfo,
-            onUnlocked: (clearance) => {
-              this.playerData = clearance;
-              this.renderConfirmation(container);
-            },
-            onReturnHome: () => {
-              this.onBackToMenu();
-            }
-          });
-          modal.show();
+          if (typeof this.onAccessRestricted === 'function') {
+            this.onAccessRestricted(studentInfo);
+          } else {
+            this.renderAlreadyPlayed(container, studentInfo);
+          }
           return;
         }
 

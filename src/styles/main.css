@@ -2866,6 +2866,331 @@ body {
 }
 
 /* ==========================================================================
+   ACCESS RESTRICTED SCREEN — SECURITY PROTOCOL & ONE-RUN POLICY
+   ========================================================================== */
+
+.access-restricted-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  padding: 32px 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.access-restricted-card {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 42px 36px;
+  border-radius: 20px;
+  background: rgba(10, 14, 23, 0.88);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1.5px solid rgba(239, 68, 68, 0.52);
+  box-shadow: 
+    0 0 50px rgba(239, 68, 68, 0.16),
+    0 25px 60px rgba(0, 0, 0, 0.75),
+    inset 0 0 24px rgba(239, 68, 68, 0.05);
+  text-align: center;
+  position: relative;
+  animation: restrictedCardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes restrictedCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.security-badge-red {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.38);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f87171;
+  margin-bottom: 22px;
+}
+
+.security-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: pulseRed 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulseRed {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+    box-shadow: 0 0 4px #ef4444;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 1;
+    box-shadow: 0 0 12px #ef4444;
+  }
+}
+
+.security-lock-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.65);
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.18) 0%, rgba(239, 68, 68, 0.03) 70%);
+  box-shadow: 0 0 28px rgba(239, 68, 68, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  margin: 0 auto 20px;
+}
+
+.access-restricted-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.4vw, 2.35rem);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 24px rgba(239, 68, 68, 0.4);
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+
+.access-restricted-msg {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #fecaca;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.access-restricted-submsg {
+  font-size: 0.92rem;
+  color: #9ca3af;
+  margin: 0 auto 24px;
+  line-height: 1.55;
+  max-width: 440px;
+}
+
+.access-restricted-dossier {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.access-restricted-dossier .dossier-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.88rem;
+}
+
+.access-restricted-dossier .dossier-label {
+  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.access-restricted-dossier .dossier-val {
+  font-weight: 600;
+}
+
+.access-restricted-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-register-new {
+  width: 100%;
+  padding: 13px 20px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 0.95rem;
+  justify-content: center;
+  background: linear-gradient(135deg, #e11d48, #f43f5e);
+  border-color: #f43f5e;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(225, 29, 72, 0.35);
+}
+
+.btn-register-new:hover {
+  background: linear-gradient(135deg, #be123c, #e11d48);
+  box-shadow: 0 6px 26px rgba(225, 29, 72, 0.45);
+  color: #fff;
+}
+
+.btn-admin-key {
+  width: 100%;
+  padding: 12px 20px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+  justify-content: center;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+}
+
+.btn-admin-key:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.btn-go-back {
+  width: 100%;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  justify-content: center;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease;
+}
+
+.btn-go-back:hover {
+  color: #f1f5f9;
+}
+
+/* ==========================================================================
+   ADMIN KEY VERIFICATION MODAL
+   ========================================================================== */
+
+.admin-key-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 16, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+.admin-key-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 32px 28px;
+  border-radius: 20px;
+  background: rgba(13, 20, 34, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+}
+
+.admin-key-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.admin-key-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--color-amber);
+  margin-bottom: 12px;
+}
+
+.admin-key-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.admin-key-desc {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.admin-key-input-group {
+  margin-bottom: 16px;
+}
+
+.admin-key-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.admin-key-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.btn-toggle-mask {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.btn-toggle-mask:hover {
+  color: #38bdf8;
+}
+
+.admin-key-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.admin-key-actions button {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ==========================================================================
    BACKDROP-FILTER UNSUPPORTED FALLBACK
    ========================================================================== */
 

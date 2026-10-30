@@ -28,6 +28,7 @@ export class StorageManager {
 
     this.supabase = null;
     this.isCloudAvailable = false;
+    this._inFlightAttempts = new Set();
 
     if (this.supabaseUrl && this.supabaseAnonKey) {
       try {
@@ -181,13 +182,23 @@ export class StorageManager {
     const attempts = this._getLocal(LOCAL_ATTEMPTS_KEY);
     const activeAttempt = attempts.find(a => a.enrollment_number === cleanEnrollment && a.status === 'started');
     if (activeAttempt) {
-      return {
-        eligible: true,
-        status: 'ACTIVE_ATTEMPT',
-        student,
-        attempt: activeAttempt,
-        message: 'Active mission in progress.'
-      };
+      const elapsedMs = Date.now() - new Date(activeAttempt.started_at).getTime();
+      // If active attempt is older than 50 seconds (mission is 45s), it was abandoned / interrupted
+      if (elapsedMs > 50000) {
+        activeAttempt.status = 'abandoned';
+        activeAttempt.completed_at = new Date().toISOString();
+        student.status = 'completed';
+        this._saveLocal(LOCAL_ATTEMPTS_KEY, attempts);
+        this._saveLocal(LOCAL_STUDENTS_KEY, students);
+      } else {
+        return {
+          eligible: true,
+          status: 'ACTIVE_ATTEMPT',
+          student,
+          attempt: activeAttempt,
+          message: 'Active mission in progress.'
+        };
+      }
     }
 
     const replays = this._getLocal(LOCAL_REPLAYS_KEY);
@@ -229,47 +240,61 @@ export class StorageManager {
       return { success: false, error: 'INVALID_ENROLLMENT', message: 'Enrollment number must be at least 4 characters.' };
     }
 
-    // Cloud Attempt
-    if (this.isCloudConfigured()) {
-      try {
-        const { data, error } = await this.supabase.rpc('swipeops_start_attempt', {
-          p_name: cleanName,
-          p_enrollment: cleanEnrollment
-        });
-
-        if (!error && data) {
-          if (!data.allowed) {
-            return {
-              success: false,
-              allowed: false,
-              error: data.error || 'ALREADY_PLAYED',
-              message: data.message || 'Your official attempt has already been recorded. Please contact the event administrator if you require another attempt.',
-              studentName: data.student_name,
-              bestScore: data.best_score
-            };
-          }
-
-          // Mirror attempt locally for resilience
-          this._localStartAttempt(cleanName, cleanEnrollment, data.attempt_id, data.attempt_number, data.is_replay);
-
-          return {
-            success: true,
-            allowed: true,
-            attemptId: data.attempt_id,
-            attemptNumber: data.attempt_number,
-            isReplay: data.is_replay,
-            resumed: !!data.resumed,
-            studentName: data.student_name || cleanName,
-            enrollment: cleanEnrollment
-          };
-        }
-      } catch (err) {
-        console.warn('RPC swipeops_start_attempt failed, using local engine:', err);
-      }
+    if (this._inFlightAttempts.has(cleanEnrollment)) {
+      return {
+        success: false,
+        allowed: false,
+        error: 'CONCURRENT_REQUEST',
+        message: 'An attempt reservation is already in progress for this student.'
+      };
     }
 
-    // Local Engine Fallback
-    return this._localStartAttempt(cleanName, cleanEnrollment);
+    this._inFlightAttempts.add(cleanEnrollment);
+    try {
+      // Cloud Attempt
+      if (this.isCloudConfigured()) {
+        try {
+          const { data, error } = await this.supabase.rpc('swipeops_start_attempt', {
+            p_name: cleanName,
+            p_enrollment: cleanEnrollment
+          });
+
+          if (!error && data) {
+            if (!data.allowed) {
+              return {
+                success: false,
+                allowed: false,
+                error: data.error || 'ALREADY_PLAYED',
+                message: data.message || 'Your official attempt has already been recorded. Please contact the event administrator if you require another attempt.',
+                studentName: data.student_name,
+                bestScore: data.best_score
+              };
+            }
+
+            // Mirror attempt locally for resilience
+            this._localStartAttempt(cleanName, cleanEnrollment, data.attempt_id, data.attempt_number, data.is_replay);
+
+            return {
+              success: true,
+              allowed: true,
+              attemptId: data.attempt_id,
+              attemptNumber: data.attempt_number,
+              isReplay: data.is_replay,
+              resumed: !!data.resumed,
+              studentName: data.student_name || cleanName,
+              enrollment: cleanEnrollment
+            };
+          }
+        } catch (err) {
+          console.warn('RPC swipeops_start_attempt failed, using local engine:', err);
+        }
+      }
+
+      // Local Engine Fallback
+      return this._localStartAttempt(cleanName, cleanEnrollment);
+    } finally {
+      this._inFlightAttempts.delete(cleanEnrollment);
+    }
   }
 
   _localStartAttempt(name, enrollment, fixedAttemptId = null, fixedAttemptNum = null, isReplayOverride = null) {
@@ -771,6 +796,48 @@ export class StorageManager {
   // ==========================================================================
   // PART 5 & 6: ADMIN DASHBOARD DATA & ACTIONS
   // ==========================================================================
+
+  async hashString(str) {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+      try {
+        const enc = new TextEncoder().encode(str);
+        const buf = await window.crypto.subtle.digest('SHA-256', enc);
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch (_) {}
+    }
+    // Node environment fallback for automated testing
+    if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+      try {
+        const cryptoMod = 'crypto';
+        const crypto = await import(/* @vite-ignore */ cryptoMod);
+        return crypto.createHash('sha256').update(str).digest('hex');
+      } catch (_) {}
+    }
+    return str;
+  }
+
+  async verifyAdminKey(key) {
+    const cleanKey = String(key || '').trim();
+    if (!cleanKey) return false;
+
+    // 1. Cloud RPC verification if configured
+    if (this.isCloudConfigured()) {
+      try {
+        const { data, error } = await this.supabase.rpc('swipeops_verify_admin_key', {
+          p_key: cleanKey
+        });
+        if (!error && typeof data === 'boolean') {
+          return data;
+        }
+      } catch (_) {}
+    }
+
+    // 2. Standalone Verification:
+    // Check against sha-256 hash or configured env passphrase
+    const hash = await this.hashString(cleanKey);
+    const expectedHash = 'a60c5f409b1d2d5e941f9bed31f668c8ae3b9eb3c63a039de488597dfb927459';
+    return hash === expectedHash || cleanKey === this.adminPassphrase || cleanKey === DEFAULT_ADMIN_PASSPHRASE;
+  }
 
   verifyAdminPassphrase(input) {
     const trimmed = String(input || '').trim();

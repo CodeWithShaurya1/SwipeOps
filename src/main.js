@@ -13,6 +13,7 @@ import { GameOver } from './ui/GameOver.js';
 import { Leaderboard } from './ui/Leaderboard.js';
 import { AdminDashboard } from './ui/AdminDashboard.js';
 import { HowToPlayModal } from './ui/HowToPlayModal.js';
+import { AccessRestricted } from './ui/AccessRestricted.js';
 
 import { IncidentEngine } from './systems/IncidentEngine.js';
 import { ScoringEngine } from './systems/ScoringEngine.js';
@@ -40,19 +41,54 @@ class GameApp {
     // Mount living animated DevOps background canvas
     devopsBg.mount();
 
-    // Check if an active attempt was interrupted by a browser refresh
+    // Attach unload listener: closing/refreshing during active mission consumes attempt immediately
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        if (this.activeScreen instanceof MissionScreen && this.playerData && this.playerData.attemptId) {
+          const stats = this.scoringEngine ? this.scoringEngine.getStats() : { score: 0, accuracy: 0, correct: 0, incorrect: 0, timeout: 0, maxStreak: 0 };
+          const duration = this.missionTimer ? this.missionTimer.getMissionElapsed() : 45;
+          storage.completeAttempt(this.playerData.attemptId, {
+            enrollment: this.playerData.enrollment,
+            finalScore: stats.score,
+            accuracy: stats.accuracy,
+            correct: stats.correct,
+            incorrect: stats.incorrect,
+            timeout: stats.timeout,
+            maxStreak: stats.maxStreak,
+            missionDuration: duration
+          });
+        }
+      });
+    }
+
+    // Check if an attempt was interrupted by a browser refresh
     const savedSession = this.getSavedActiveSession();
-    if (savedSession && savedSession.playerData && savedSession.playerData.attemptId) {
-      storage.checkStudentStatus(savedSession.playerData.enrollment).then((check) => {
-        if (check.eligible && check.status === 'ACTIVE_ATTEMPT') {
-          this.playerData = savedSession.playerData;
-          this.startMission(true);
+    if (savedSession && savedSession.playerData && savedSession.playerData.enrollment) {
+      const studentEnroll = savedSession.playerData.enrollment;
+
+      // Mark the interrupted attempt as consumed so refreshing cannot restore a fresh attempt
+      if (savedSession.playerData.attemptId) {
+        storage.completeAttempt(savedSession.playerData.attemptId, {
+          enrollment: studentEnroll,
+          finalScore: 0,
+          accuracy: 0,
+          correct: 0,
+          incorrect: 0,
+          timeout: 3,
+          maxStreak: 0,
+          missionDuration: 45
+        }).catch(() => {});
+      }
+      this.clearActiveSession();
+
+      // Check authoritative record and immediately route to Access Restricted if already played
+      storage.checkStudentStatus(studentEnroll).then((check) => {
+        if (!check.eligible && check.status === 'ALREADY_PLAYED') {
+          this.showAccessRestricted(check.student || savedSession.playerData);
         } else {
-          this.clearActiveSession();
           this.showMainMenu();
         }
       }).catch(() => {
-        this.clearActiveSession();
         this.showMainMenu();
       });
       return;
@@ -109,10 +145,27 @@ class GameApp {
         this.startMission();
       },
       onBackToMenu: () => this.showMainMenu(),
-      onViewLeaderboard: () => this.showLeaderboard()
+      onViewLeaderboard: () => this.showLeaderboard(),
+      onAccessRestricted: (studentData) => this.showAccessRestricted(studentData)
     });
     registration.render(this.appContainer);
     this.activeScreen = registration;
+  }
+
+  showAccessRestricted(studentData) {
+    this.teardownActive();
+    devopsBg.setScreenMode('restricted');
+    const accessRestricted = new AccessRestricted({
+      studentData,
+      onRegisterNew: () => this.showRegistration(),
+      onGoBack: () => this.showMainMenu(),
+      onAttemptReset: (clearance) => {
+        this.playerData = clearance;
+        this.startMission();
+      }
+    });
+    accessRestricted.mount(this.appContainer);
+    this.activeScreen = accessRestricted;
   }
 
   startMission(isResumed = false) {

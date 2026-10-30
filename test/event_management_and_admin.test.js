@@ -320,4 +320,59 @@ assert.strictEqual(sm.verifyAdminPassphrase('devops2026'), true);
 assert.strictEqual(sm.verifyAdminPassphrase('wrongpass'), false);
 console.log('   ✓ Admin stats, audit logs, and security passphrase verified.');
 
+// ============================================================================
+// PART 8: CRYPTOGRAPHIC ADMIN KEY VERIFICATION & RATE LIMIT DEFENSE
+// ============================================================================
+console.log('11. Testing Cryptographic Admin Key Verification...');
+const isKeyValid = await sm.verifyAdminKey('devops2026');
+assert.strictEqual(isKeyValid, true, 'SHA-256 / configured key check must pass for devops2026');
+
+const isKeyInvalid = await sm.verifyAdminKey('incorrect_key');
+assert.strictEqual(isKeyInvalid, false, 'Invalid admin key must be rejected');
+
+const isKeyBlank = await sm.verifyAdminKey('');
+assert.strictEqual(isKeyBlank, false, 'Blank admin key must be rejected');
+console.log('   ✓ Cryptographic admin key verification confirmed.');
+
+// ============================================================================
+// PART 9: CONCURRENCY DEFENSE ON ATTEMPT RESERVATION
+// ============================================================================
+console.log('12. Testing Concurrency Defense on startAttempt...');
+const concEnroll = '0101CS221999';
+// Artificially simulate in-flight attempt lock
+sm._inFlightAttempts.add(concEnroll);
+
+const blockedConcurrent = await sm.startAttempt('Concurrent Student', concEnroll);
+assert.strictEqual(blockedConcurrent.success, false);
+assert.strictEqual(blockedConcurrent.error, 'CONCURRENT_REQUEST');
+assert(blockedConcurrent.message.includes('already in progress'));
+
+// Release lock
+sm._inFlightAttempts.delete(concEnroll);
+const allowedAfterLock = await sm.startAttempt('Concurrent Student', concEnroll);
+assert.strictEqual(allowedAfterLock.success, true);
+console.log('   ✓ Concurrency defense successfully blocked duplicate simultaneous requests.');
+
+// ============================================================================
+// PART 10: ACCESS RESTRICTED UI COMPONENT INITIALIZATION
+// ============================================================================
+console.log('13. Testing AccessRestricted UI Screen Component...');
+const { AccessRestricted } = await import('../src/ui/AccessRestricted.js');
+const mockDom = { innerHTML: '', querySelector: () => ({ addEventListener: () => {} }) };
+const ar = new AccessRestricted({
+  studentData: {
+    student_name: 'Sarah Connor',
+    enrollment_number: '0101CS221001',
+    best_score: 350
+  },
+  onRegisterNew: () => {},
+  onGoBack: () => {},
+  onAttemptReset: () => {}
+});
+
+assert.strictEqual(typeof ar.render, 'function');
+assert.strictEqual(typeof ar.openAdminKeyModal, 'function');
+assert.strictEqual(typeof ar.renderModalStepConfirm, 'function');
+console.log('   ✓ AccessRestricted UI screen component verified.');
+
 console.log('--- ALL EVENT MANAGEMENT & ADMIN TESTS PASSED PERFECTLY! ---');
