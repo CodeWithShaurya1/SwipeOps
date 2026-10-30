@@ -272,8 +272,28 @@ class GameApp {
   }
 }
 
+// Enforce all text inputs across the entire application in capital letters
+document.addEventListener('input', (e) => {
+  const target = e.target;
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.type !== 'file' && target.type !== 'checkbox' && target.type !== 'radio') {
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    const oldVal = target.value;
+    const newVal = oldVal.toUpperCase();
+    if (oldVal !== newVal) {
+      target.value = newVal;
+      if (start !== null && end !== null) {
+        try {
+          target.setSelectionRange(start, end);
+        } catch (_) {}
+      }
+    }
+  }
+}, true);
+
 // Bootstrap once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const app = new GameApp();
   app.init();
 });
+

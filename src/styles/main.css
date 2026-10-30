@@ -2881,18 +2881,18 @@ body {
 
 .access-restricted-card {
   width: 100%;
-  max-width: 540px;
+  max-width: 520px;
   margin: 0 auto;
   padding: 42px 36px;
-  border-radius: 20px;
-  background: rgba(10, 14, 23, 0.88);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1.5px solid rgba(239, 68, 68, 0.52);
+  border-radius: 18px;
+  background: rgba(9, 14, 25, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid #ff3366;
   box-shadow: 
-    0 0 50px rgba(239, 68, 68, 0.16),
-    0 25px 60px rgba(0, 0, 0, 0.75),
-    inset 0 0 24px rgba(239, 68, 68, 0.05);
+    0 0 35px rgba(255, 51, 102, 0.35),
+    0 25px 70px rgba(0, 0, 0, 0.9),
+    inset 0 0 18px rgba(255, 51, 102, 0.08);
   text-align: center;
   position: relative;
   animation: restrictedCardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2915,23 +2915,23 @@ body {
   gap: 8px;
   padding: 6px 16px;
   border-radius: 9999px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.38);
-  font-family: var(--font-mono);
+  background: rgba(255, 51, 102, 0.12);
+  border: 1px solid rgba(255, 51, 102, 0.45);
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
   font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #f87171;
-  margin-bottom: 22px;
+  color: #ff4d6d;
+  margin-bottom: 20px;
 }
 
 .security-badge-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 10px #ef4444;
+  background: #ff3355;
+  box-shadow: 0 0 10px #ff3355;
   animation: pulseRed 1.8s ease-in-out infinite alternate;
 }
 
@@ -2939,148 +2939,163 @@ body {
   0% {
     transform: scale(0.85);
     opacity: 0.6;
-    box-shadow: 0 0 4px #ef4444;
+    box-shadow: 0 0 4px #ff3355;
   }
   100% {
     transform: scale(1.15);
     opacity: 1;
-    box-shadow: 0 0 12px #ef4444;
+    box-shadow: 0 0 12px #ff3355;
   }
 }
 
-.security-lock-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 2px solid rgba(239, 68, 68, 0.65);
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.18) 0%, rgba(239, 68, 68, 0.03) 70%);
-  box-shadow: 0 0 28px rgba(239, 68, 68, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ef4444;
-  margin: 0 auto 20px;
-}
-
 .access-restricted-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 3.4vw, 2.35rem);
-  font-weight: 850;
+  font-family: 'Orbitron', 'Space Grotesk', var(--font-heading), sans-serif;
+  font-size: clamp(1.8rem, 3.2vw, 2.2rem);
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ffffff;
-  text-shadow: 0 0 24px rgba(239, 68, 68, 0.4);
-  margin-bottom: 12px;
+  color: #ff3355;
+  text-shadow: 0 0 20px rgba(255, 51, 85, 0.5);
+  margin-bottom: 18px;
   line-height: 1.15;
 }
 
+.security-lock-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 51, 102, 0.5);
+  background: radial-gradient(circle, rgba(255, 51, 102, 0.2) 0%, rgba(255, 51, 102, 0.04) 70%);
+  box-shadow: 0 0 24px rgba(255, 51, 102, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.security-lock-emoji {
+  font-size: 26px;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4));
+}
+
 .access-restricted-msg {
-  font-size: 1.08rem;
-  font-weight: 600;
-  color: #fecaca;
-  margin-bottom: 8px;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
+  font-family: 'Orbitron', 'Space Grotesk', var(--font-heading), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
 }
 
 .access-restricted-submsg {
-  font-size: 0.92rem;
-  color: #9ca3af;
-  margin: 0 auto 24px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0 auto 26px;
   line-height: 1.55;
   max-width: 440px;
 }
 
-.access-restricted-dossier {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 14px 20px;
-  margin-bottom: 28px;
-  text-align: left;
-}
-
-.access-restricted-dossier .dossier-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  font-size: 0.88rem;
-}
-
-.access-restricted-dossier .dossier-label {
-  color: #64748b;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-}
-
-.access-restricted-dossier .dossier-val {
-  font-weight: 600;
-}
-
-.access-restricted-actions {
+/* Action Buttons Grid Matching Reference */
+.access-restricted-actions-layout {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.btn-register-new {
+.btn-ref-primary {
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 13px 20px;
-  font-family: var(--font-display);
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 0.92rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(124, 58, 237, 0.45));
+  border: 1.5px solid #00f0ff;
+  border-radius: 10px;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ref-primary:hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.55), rgba(124, 58, 237, 0.65));
+  box-shadow: 0 0 26px rgba(0, 240, 255, 0.55);
+  transform: translateY(-1px);
+}
+
+.access-restricted-secondary-row {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-ref-admin-key {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
   font-weight: 800;
   letter-spacing: 0.06em;
-  font-size: 0.95rem;
-  justify-content: center;
-  background: linear-gradient(135deg, #e11d48, #f43f5e);
-  border-color: #f43f5e;
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(225, 29, 72, 0.35);
-}
-
-.btn-register-new:hover {
-  background: linear-gradient(135deg, #be123c, #e11d48);
-  box-shadow: 0 6px 26px rgba(225, 29, 72, 0.45);
-  color: #fff;
-}
-
-.btn-admin-key {
-  width: 100%;
-  padding: 12px 20px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  font-size: 0.9rem;
-  justify-content: center;
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #f1f5f9;
-}
-
-.btn-admin-key:hover {
-  background: rgba(51, 65, 85, 0.8);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #fff;
-}
-
-.btn-go-back {
-  width: 100%;
-  padding: 10px 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  justify-content: center;
-  color: #94a3b8;
-  background: transparent;
-  border: none;
+  font-size: 0.82rem;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(236, 72, 153, 0.75);
+  border-radius: 10px;
+  box-shadow: 0 0 14px rgba(236, 72, 153, 0.25);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.btn-go-back:hover {
-  color: #f1f5f9;
+.btn-ref-admin-key:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #f43f5e;
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-ref-go-back {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', var(--font-mono), monospace;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 0.82rem;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  border-radius: 10px;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ref-go-back:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Global Uppercase Rule for All Inputs */
+input,
+input[type="text"],
+input[type="password"],
+.reg-input,
+textarea {
+  text-transform: uppercase !important;
 }
 
 /* ==========================================================================

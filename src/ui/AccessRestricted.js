@@ -43,28 +43,23 @@ export class AccessRestricted {
   }
 
   render() {
-    const studentName = this.student.student_name || this.student.name || 'Operator';
-    const rawEnrollment = this.student.enrollment_number || this.student.enrollment || 'UNKNOWN';
-    const maskedEnroll = maskEnrollment(rawEnrollment);
-    const bestScore = this.student.best_score ?? (this.student.score ?? 0);
-
     this.container.innerHTML = `
       <div class="access-restricted-view">
-        <div class="access-restricted-card glass-surface">
+        <div class="access-restricted-card">
           
-          <!-- Red Security Badge -->
+          <!-- Red Security Badge: SECURITY PROTOCOL // ONE-RUN POLICY -->
           <div class="security-badge-red">
             <span class="security-badge-dot"></span>
-            <span>SECURITY PROTOCOL · ONE-RUN POLICY</span>
-          </div>
-
-          <!-- Circular Red Lock Outline -->
-          <div class="security-lock-circle">
-            ${Icons.lock(38)}
+            <span>SECURITY PROTOCOL // ONE-RUN POLICY</span>
           </div>
 
           <!-- Futuristic Heading -->
           <h1 class="access-restricted-title">ACCESS RESTRICTED</h1>
+
+          <!-- Circular Red Lock Outline -->
+          <div class="security-lock-circle">
+            <span class="security-lock-emoji">🔒</span>
+          </div>
 
           <!-- Main Warning -->
           <p class="access-restricted-msg">
@@ -76,42 +71,24 @@ export class AccessRestricted {
             Each student is allowed one attempt. Contact the event administrator if you need another attempt.
           </p>
 
-          <!-- Operator Security Dossier -->
-          <div class="access-restricted-dossier">
-            <div class="dossier-row">
-              <span class="dossier-label">Registered Operator</span>
-              <span class="dossier-val text-main">${this.escapeHtml(studentName)}</span>
-            </div>
-            <div class="dossier-row">
-              <span class="dossier-label">Enrollment ID</span>
-              <span class="dossier-val text-cyan mono">${this.escapeHtml(maskedEnroll)}</span>
-            </div>
-            <div class="dossier-row">
-              <span class="dossier-label">Official Score</span>
-              <span class="dossier-val text-green mono" style="font-weight: 700;">${bestScore} pts</span>
-            </div>
-            <div class="dossier-row">
-              <span class="dossier-label">Attempt Status</span>
-              <span class="dossier-val text-rose mono" style="font-weight: 700;">1 OF 1 CONSUMED</span>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="access-restricted-actions">
-            <button type="button" class="btn btn-primary btn-register-new" id="btn-restricted-new-student">
-              <span class="btn-icon">${Icons.userPlus(16)}</span>
+          <!-- Action Buttons Layout from Reference -->
+          <div class="access-restricted-actions-layout">
+            <button type="button" class="btn-ref-primary" id="btn-restricted-new-student">
+              <span class="btn-icon">⚡</span>
               <span>REGISTER NEW STUDENT</span>
             </button>
 
-            <button type="button" class="btn btn-secondary btn-admin-key" id="btn-restricted-admin-key">
-              <span class="btn-icon">${Icons.key(16)}</span>
-              <span>ENTER ADMIN KEY</span>
-            </button>
+            <div class="access-restricted-secondary-row">
+              <button type="button" class="btn-ref-admin-key" id="btn-restricted-admin-key">
+                <span class="btn-icon">🔑</span>
+                <span>ENTER ADMIN KEY</span>
+              </button>
 
-            <button type="button" class="btn btn-ghost btn-go-back" id="btn-restricted-go-back">
-              <span class="btn-icon">${Icons.arrowLeft(15)}</span>
-              <span>GO BACK</span>
-            </button>
+              <button type="button" class="btn-ref-go-back" id="btn-restricted-go-back">
+                <span class="btn-icon">←</span>
+                <span>GO BACK</span>
+              </button>
+            </div>
           </div>
 
         </div>

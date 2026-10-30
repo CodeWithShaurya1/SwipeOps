@@ -40,7 +40,7 @@ const sm = new StorageManager();
 console.log('1. Testing Identity Normalization & Masking...');
 assert.strictEqual(normalizeEnrollment('  0101cs221045  '), '0101CS221045');
 assert.strictEqual(normalizeEnrollment('  0101 it 211002 '), '0101IT211002');
-assert.strictEqual(normalizeName('   Alex    Turner   '), 'Alex Turner');
+assert.strictEqual(normalizeName('   Alex    Turner   '), 'ALEX TURNER');
 
 // Privacy Masking
 assert.strictEqual(maskEnrollment('0101CS221045'), '0101****1045');

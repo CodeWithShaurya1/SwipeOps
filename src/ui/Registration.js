@@ -159,6 +159,13 @@ export class Registration {
     const submitBtn = container.querySelector('#btn-reg-submit');
     const footerAdminBtn = container.querySelector('#btn-reg-admin-replay');
 
+    nameInput.addEventListener('input', () => {
+      nameInput.value = nameInput.value.toUpperCase();
+    });
+    enrollInput.addEventListener('input', () => {
+      enrollInput.value = enrollInput.value.toUpperCase();
+    });
+
     nameInput.focus();
 
     container.querySelector('#btn-reg-back').addEventListener('click', () => {
@@ -170,7 +177,7 @@ export class Registration {
       footerAdminBtn.addEventListener('click', () => {
         sound.playClick();
         const enroll = normalizeEnrollment(enrollInput.value) || '';
-        const name = normalizeName(nameInput.value) || 'Operator';
+        const name = normalizeName(nameInput.value) || 'OPERATOR';
         this.openAdminReplayModal({ enrollment_number: enroll, student_name: name });
       });
     }
@@ -211,7 +218,12 @@ export class Registration {
           best_score: check.bestScore || 0
         };
 
-        // Render error banner with direct action to unlock replay right here
+        if (typeof this.onAccessRestricted === 'function') {
+          this.onAccessRestricted(studentInfo);
+          return;
+        }
+
+        // Fallback error banner
         errBox.innerHTML = `
           <div class="reg-error-msg-text">
             Enrollment <strong>${this.escapeHtml(enrollment)}</strong> already recorded a score (${studentInfo.best_score ?? 0} pts).

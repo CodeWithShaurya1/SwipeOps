@@ -13,7 +13,8 @@ export function normalizeEnrollment(enrollment) {
 export function normalizeName(name) {
   return String(name || '')
     .trim()
-    .replace(/\s+/g, ' ');
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
 }
 
 export function maskEnrollment(enrollment) {
