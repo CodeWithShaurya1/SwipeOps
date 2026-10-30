@@ -16,14 +16,17 @@ const LOCAL_AUDIT_LOG_KEY = 'swipeops_audit_log_v2';
 const LEGACY_STORAGE_KEY = 'devops_arena_leaderboard_v1';
 const SUBMITTED_SESSIONS_KEY = 'devops_arena_submitted_sessions';
 
-// Default Admin Key (can also be set in VITE_ADMIN_PASSPHRASE)
+// Default Cloud Connection & Admin Key
+const DEFAULT_SUPABASE_URL = 'https://rrocaucskfsokxubpgra.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_QEmcA7peluK0phKfbIhdRA_lbtrCFmb';
 const DEFAULT_ADMIN_PASSPHRASE = 'devops2026';
 
 export class StorageManager {
   constructor() {
+    const isBrowser = typeof window !== 'undefined';
     const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
-    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || '';
-    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || (isBrowser ? DEFAULT_SUPABASE_URL : '');
+    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (isBrowser ? DEFAULT_SUPABASE_ANON_KEY : '');
     this.adminPassphrase = env.VITE_ADMIN_PASSPHRASE || DEFAULT_ADMIN_PASSPHRASE;
 
     this.supabase = null;
