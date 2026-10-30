@@ -32,57 +32,57 @@ export class MainMenu {
           3 critical incidents. 45 seconds. Can you keep the cluster online?
         </p>
 
-        <!-- Integrated CI/CD Pipeline Rail -->
-        <div class="live-pipeline-rail glass-surface">
+        <!-- Integrated CI/CD Pipeline Rail (Floating Frosted Glass Dashboard) -->
+        <div class="live-pipeline-rail pipeline-container glass-surface">
           <div class="rail-header">
             <span class="rail-title">Live deployment pipeline · Runner 04</span>
-            <span class="rail-live-tag"><span class="blink-dot"></span> Streaming</span>
+            <span class="rail-live-tag"><span class="status-dot status-dot-pass blink-dot"></span> Streaming</span>
           </div>
 
           <div class="pipeline-stages-grid">
-            <div class="pipe-node active-pass">
+            <div class="pipe-node active-pass node-ready">
               <div class="pipe-icon">📦</div>
               <div class="pipe-name">Source</div>
-              <div class="pipe-status">Ready</div>
+              <div class="pipe-status status-ready"><span class="status-dot status-dot-ready"></span> Ready</div>
             </div>
             <div class="pipe-track active">
               <div class="packet-runner"></div>
             </div>
 
-            <div class="pipe-node active-pass">
+            <div class="pipe-node active-pass node-pass">
               <div class="pipe-icon">⚙️</div>
               <div class="pipe-name">Build</div>
-              <div class="pipe-status">Pass</div>
+              <div class="pipe-status status-pass"><span class="status-dot status-dot-pass"></span> Pass</div>
             </div>
             <div class="pipe-track active">
               <div class="packet-runner"></div>
             </div>
 
-            <div class="pipe-node active-pass">
+            <div class="pipe-node active-pass node-pass">
               <div class="pipe-icon">🧪</div>
               <div class="pipe-name">Tests</div>
-              <div class="pipe-status">Pass</div>
+              <div class="pipe-status status-pass"><span class="status-dot status-dot-pass"></span> Pass</div>
             </div>
             <div class="pipe-track standby"></div>
 
-            <div class="pipe-node active-standby">
+            <div class="pipe-node active-standby node-standby">
               <div class="pipe-icon">🚀</div>
               <div class="pipe-name">Deploy</div>
-              <div class="pipe-status standby-text">Standby</div>
+              <div class="pipe-status status-standby standby-text"><span class="status-dot status-dot-standby"></span> Standby</div>
             </div>
             <div class="pipe-track standby"></div>
 
-            <div class="pipe-node active-pass">
+            <div class="pipe-node active-pass node-active">
               <div class="pipe-icon">📡</div>
               <div class="pipe-name">Monitor</div>
-              <div class="pipe-status">Active</div>
+              <div class="pipe-status status-pass"><span class="status-dot status-dot-pass"></span> Active</div>
             </div>
           </div>
         </div>
 
-        <!-- Strong Hero Call To Action -->
+        <!-- Supercharged Hero Call To Action -->
         <div class="hero-actions">
-          <button class="btn btn-hero-start" id="btn-start-mission">
+          <button class="btn btn-hero-start start-btn" id="btn-start-mission">
             <span class="hero-btn-glow"></span>
             <span class="hero-btn-icon">⚡</span>
             <span class="hero-btn-label">START MISSION</span>

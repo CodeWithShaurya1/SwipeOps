@@ -104,10 +104,17 @@ export class ProductionHealth {
 
       if (valEl && barEl) {
         const prev = parseInt(valEl.textContent, 10);
+        const color = getColor(val);
         valEl.textContent = `${val}%`;
-        valEl.style.color = getColor(val);
+        valEl.style.color = color;
+        valEl.style.textShadow = val >= 75
+          ? '0 0 8px rgba(52, 211, 153, 0.45)'
+          : (val >= 40 ? '0 0 8px rgba(251, 191, 36, 0.40)' : '0 0 10px rgba(244, 63, 94, 0.50)');
         barEl.style.width = `${val}%`;
-        barEl.style.background = getColor(val);
+        barEl.style.background = color;
+        barEl.style.boxShadow = val >= 75
+          ? '0 0 8px rgba(52, 211, 153, 0.5)'
+          : (val >= 40 ? '0 0 8px rgba(251, 191, 36, 0.5)' : '0 0 10px rgba(244, 63, 94, 0.65)');
 
         if (!isNaN(prev) && prev !== val && cardEl) {
           cardEl.classList.remove('metric-impacted');

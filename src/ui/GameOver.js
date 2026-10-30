@@ -75,7 +75,7 @@ export class GameOver {
           <div style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px;">
             Operator: <span class="text-main" style="font-weight: 700;">${this.escapeHtml(this.playerData.name)}</span> ·
             Enrollment: <span class="text-cyan">${this.escapeHtml(this.playerData.enrollment)}</span> ·
-            Status: <span id="sync-status-badge" class="text-amber">${this.syncStatus}</span>
+            Status: <span id="sync-status-badge" class="status-standby">${this.syncStatus}</span>
           </div>
 
           <!-- Performance Statistics Grid -->
@@ -229,10 +229,10 @@ export class GameOver {
     if (badge) {
       if (res.cloudSaved) {
         badge.textContent = 'SAVED TO CLOUD LEADERBOARD';
-        badge.className = 'text-green';
+        badge.className = 'status-pass';
       } else {
         badge.textContent = 'SAVED LOCALLY (STANDALONE)';
-        badge.className = 'text-amber';
+        badge.className = 'status-standby';
       }
     }
   }
