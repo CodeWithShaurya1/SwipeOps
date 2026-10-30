@@ -12,6 +12,7 @@ import { ProductionHealth } from './ProductionHealth.js';
 import { IncidentCard } from './IncidentCard.js';
 import { sound } from '../systems/SoundFX.js';
 import { devopsBg } from '../systems/DevOpsBackground.js';
+import { Icons } from './icons.js';
 
 export class MissionScreen {
   constructor({
@@ -56,7 +57,7 @@ export class MissionScreen {
           <div class="brand-section">
             <div class="brand-logo-text">DEVOPS <span>ARENA</span></div>
             <div class="player-tag">
-              <span>👤</span>
+              <span class="player-icon">${Icons.user(13)}</span>
               <span>${this.escapeHtml(this.playerData.name)}</span>
             </div>
           </div>
@@ -79,7 +80,7 @@ export class MissionScreen {
 
           <div class="stats-cluster">
             <div class="streak-pill" id="hud-streak">
-              <span>🔥</span>
+              <span class="streak-icon">${Icons.flame(13)}</span>
               <span id="val-streak">0 streak</span>
             </div>
 
@@ -89,7 +90,7 @@ export class MissionScreen {
             </div>
 
             <div class="timer-box" title="Global Mission Timer">
-              <span>⏱️</span>
+              <span class="timer-icon">${Icons.clock(13)}</span>
               <span id="val-mission-time">45s</span>
             </div>
           </div>
@@ -323,7 +324,7 @@ export class MissionScreen {
 
     let streakBadge = '';
     if (info.bonusAwarded > 0) {
-      streakBadge = `<div class="bonus-badge-pop">🔥 +${info.bonusAwarded} perfect streak bonus!</div>`;
+      streakBadge = `<div class="bonus-badge-pop"><span class="bonus-icon">${Icons.flame(14)}</span><span>+${info.bonusAwarded} streak bonus</span></div>`;
     }
 
     feedbackSlot.innerHTML = `
@@ -344,7 +345,8 @@ export class MissionScreen {
         </p>
 
         <div class="feedback-tap-hint">
-          Tap anywhere to proceed ⚡
+          <span>Tap anywhere to continue</span>
+          <span class="hint-arrow">${Icons.arrowRight(13)}</span>
         </div>
       </div>
     `;

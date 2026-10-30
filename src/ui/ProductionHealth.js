@@ -9,6 +9,8 @@
  * Supports the incident decision without dominating the central viewport.
  */
 
+import { Icons } from './icons.js';
+
 export class ProductionHealth {
   constructor(productionState) {
     this.productionState = productionState;
@@ -29,7 +31,7 @@ export class ProductionHealth {
       <div class="health-cluster-bar glass-surface" id="health-cluster-bar" aria-label="Production Health Telemetry">
         <!-- Service Availability -->
         <div class="health-pill" id="card-availability" title="Service Availability: Cluster Uptime">
-          <div class="pill-glyph">🌐</div>
+          <div class="pill-glyph">${Icons.globe(13)}</div>
           <div class="pill-info">
             <div class="pill-top">
               <span class="pill-title">Availability</span>
@@ -43,7 +45,7 @@ export class ProductionHealth {
 
         <!-- Data Integrity -->
         <div class="health-pill" id="card-integrity" title="Data Integrity: Replication & Consistency">
-          <div class="pill-glyph">🛡️</div>
+          <div class="pill-glyph">${Icons.database(13)}</div>
           <div class="pill-info">
             <div class="pill-top">
               <span class="pill-title">Integrity</span>
@@ -57,7 +59,7 @@ export class ProductionHealth {
 
         <!-- Security Posture -->
         <div class="health-pill" id="card-security" title="Security Posture: Access Control & CVEs">
-          <div class="pill-glyph">🔐</div>
+          <div class="pill-glyph">${Icons.shield(13)}</div>
           <div class="pill-info">
             <div class="pill-top">
               <span class="pill-title">Security</span>
@@ -71,7 +73,7 @@ export class ProductionHealth {
 
         <!-- Deployment Stability -->
         <div class="health-pill" id="card-stability" title="Deployment Stability: Pod Health & Rollouts">
-          <div class="pill-glyph">⚡</div>
+          <div class="pill-glyph">${Icons.activity(13)}</div>
           <div class="pill-info">
             <div class="pill-top">
               <span class="pill-title">Stability</span>

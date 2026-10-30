@@ -5,6 +5,7 @@
 
 import { sound } from '../systems/SoundFX.js';
 import { storage } from '../systems/StorageManager.js';
+import { Icons } from './icons.js';
 
 export class Leaderboard {
   constructor({ onBackToMenu, onStartMission }) {
@@ -62,10 +63,6 @@ export class Leaderboard {
         else if (rank === 2) rankClass = 'silver';
         else if (rank === 3) rankClass = 'bronze';
 
-        const completedDate = entry.completed_at
-          ? new Date(entry.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : '-';
-
         return `
           <tr>
             <td>
@@ -87,7 +84,7 @@ export class Leaderboard {
               ${entry.correct_decisions ?? 0}
             </td>
             <td class="mono text-amber">
-              ${entry.max_streak ?? 0} 🔥
+              ${entry.max_streak ?? 0}
             </td>
           </tr>
         `;
@@ -98,22 +95,27 @@ export class Leaderboard {
       <div class="leaderboard-screen">
         <div class="leaderboard-header">
           <div class="leaderboard-title">
-            <div class="category-tag">TechVerse competition</div>
-            <h2>Global Incident Leaderboard</h2>
-            <div style="font-family: var(--font-mono); font-size: 0.8rem; margin-top: 4px;">
-              Source: <span class="${isCloud ? 'text-green' : 'text-amber'}">${isCloud ? '🟢 Supabase cluster sync' : '🟡 Local standalone storage'}</span>
+            <div class="category-tag">TechVerse challenge</div>
+            <h2>Global incident leaderboard</h2>
+            <div style="font-family: var(--font-mono); font-size: 0.8rem; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+              <span class="status-dot ${isCloud ? 'status-dot-pass' : 'status-dot-standby'}"></span>
+              <span class="text-muted">Source:</span>
+              <span class="${isCloud ? 'status-pass' : 'status-standby'}">${isCloud ? 'Cloud cluster sync' : 'Local standalone storage'}</span>
             </div>
           </div>
 
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-secondary" id="btn-lb-refresh">
-              <span>🔄</span> Refresh
+              <span class="btn-icon">${Icons.refresh(14)}</span>
+              <span>Refresh</span>
             </button>
             <button class="btn btn-secondary" id="btn-lb-menu">
-              <span>🏠</span> Menu
+              <span class="btn-icon">${Icons.arrowLeft(14)}</span>
+              <span>Menu</span>
             </button>
             <button class="btn btn-primary" id="btn-lb-play">
-              <span>⚡</span> Start Mission
+              <span class="btn-icon">${Icons.play(14)}</span>
+              <span>Start mission</span>
             </button>
           </div>
         </div>
@@ -159,7 +161,7 @@ export class Leaderboard {
   }
 
   escapeHtml(str) {
-    return str
+    return String(str || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');

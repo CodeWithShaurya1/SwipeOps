@@ -25,14 +25,13 @@ export class DevOpsBackground {
 
     // Stream state
     this.columns = [];
-    this.colWidth = 44; // Wide pitch for clean negative space without clutter
+    this.colWidth = 54; // Generous column spacing to eliminate clutter
     this.tokens = [
-      'git push', 'git pull', 'docker', 'kubectl', 'helm',
-      'CI/CD', 'build', 'test', 'deploy', 'logs', 'YAML',
-      'env', '01', '{}', '</>', 'k8s', 'pod', 'prod',
-      'commit', '200 OK', '404', '500', 'bash', '::'
+      'git push', 'deploy', 'kubectl', 'helm', 'k8s',
+      'build:ok', 'test:pass', 'v2.4.0', 'pod', '200 OK',
+      'sha:8f3c', 'main', 'release', 'sync'
     ];
-    this.chars = '01{}</>$:;=-+*~#@!%?010101';
+    this.chars = '01{}</>$:;=-+*~';
 
     // Peripheral conduit packets
     this.leftPackets = [];
@@ -117,47 +116,46 @@ export class DevOpsBackground {
     for (let i = 0; i < numCols; i++) {
       const x = i * this.colWidth + (this.colWidth * 0.5);
       
-      // Central Quiet Zone: 26% to 74% of viewport width
+      // Central Calm Zone: 20% to 80% of viewport width
       const xRatio = x / w;
-      const isCenterZone = xRatio > 0.26 && xRatio < 0.74;
+      const isCenterZone = xRatio > 0.20 && xRatio < 0.80;
 
-      // Density: Center zone sparse (32%), edges active (68%)
-      const shouldActivate = isCenterZone ? Math.random() < 0.32 : Math.random() < 0.68;
+      // Keep center calm (10% density), edges lightly active (40% density)
+      const shouldActivate = isCenterZone ? Math.random() < 0.10 : Math.random() < 0.40;
 
-      const streamLength = 9 + Math.floor(Math.random() * 14); // 9 to 23 chars
+      const streamLength = 6 + Math.floor(Math.random() * 8); // 6 to 14 chars
       
-      // Speed targets: 1.8x-2.2x faster than previous (~1.5 base)
-      // Highlight quick burst (15%), primary medium (70%), ambient depth (15%)
       const speedRoll = Math.random();
       let speed;
       let isFastHighlight = false;
 
-      if (speedRoll < 0.15 && !isCenterZone) {
-        speed = 5.8 + Math.random() * 3.6; // High-velocity telemetry stream
+      if (speedRoll < 0.10 && !isCenterZone) {
+        speed = 3.0 + Math.random() * 1.5;
         isFastHighlight = true;
-      } else if (speedRoll < 0.85) {
-        speed = 2.6 + Math.random() * 2.8; // Primary dynamic stream
       } else {
-        speed = 1.8 + Math.random() * 1.4; // Slower secondary stream
+        speed = 1.2 + Math.random() * 1.4; // Soft natural movement
       }
 
       // Generate characters
       const items = [];
       for (let j = 0; j < streamLength; j++) {
-        const isToken = Math.random() < 0.28;
+        const isToken = Math.random() < 0.35;
         const text = isToken 
           ? this.tokens[Math.floor(Math.random() * this.tokens.length)]
           : this.chars[Math.floor(Math.random() * this.chars.length)];
         
+        // Steel blue (dominant), muted cyan (accent), subtle violet
+        const roll = Math.random();
+        const colorType = roll < 0.55 ? 'steel' : (roll < 0.85 ? 'cyan' : 'violet');
+
         items.push({
           text,
           isToken,
-          colorType: Math.random() < 0.82 ? 'cyan' : 'violet',
-          glitchTimer: Math.floor(Math.random() * 100)
+          colorType,
+          glitchTimer: Math.floor(Math.random() * 120)
         });
       }
 
-      // Distribute y immediately across screen height so it is dynamic on load!
       this.columns.push({
         x,
         y: Math.random() * h,
@@ -167,8 +165,8 @@ export class DevOpsBackground {
         isFastHighlight,
         length: streamLength,
         items,
-        fontSize: isCenterZone ? 11 : (isFastHighlight ? 13 : 12),
-        opacityMultiplier: isCenterZone ? 0.28 : 0.88
+        fontSize: isCenterZone ? 10 : 11,
+        opacityMultiplier: isCenterZone ? 0.16 : 0.60
       });
     }
 
@@ -328,26 +326,24 @@ export class DevOpsBackground {
 
           // Trailing alpha decay
           const trailFraction = 1 - (j / totalItems);
-          let alpha = Math.max(0.04, trailFraction * 0.48) * col.opacityMultiplier;
+          let alpha = Math.max(0.04, trailFraction * 0.40) * col.opacityMultiplier;
 
-          // Leading character is brighter with cyan/teal glow
+          // Leading character is crisp and slightly brighter, no blurry neon shadows
           const isLeader = j === 0;
           if (isLeader) {
-            alpha = Math.min(0.96, alpha * 2.4);
-            ctx.fillStyle = col.isFastHighlight ? '#FFFFFF' : '#E0F8FF';
-            ctx.shadowColor = '#46D5F5';
-            ctx.shadowBlur = 10;
+            alpha = Math.min(0.85, alpha * 2.0);
+            ctx.fillStyle = col.isFastHighlight ? '#F8FAFC' : '#E2E8F0';
           } else {
-            ctx.shadowBlur = 0;
             if (item.colorType === 'cyan') {
-              ctx.fillStyle = `rgba(70, 213, 245, ${alpha})`;
+              ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`;
+            } else if (item.colorType === 'steel') {
+              ctx.fillStyle = `rgba(148, 163, 184, ${alpha})`;
             } else {
-              ctx.fillStyle = `rgba(155, 123, 255, ${alpha * 0.9})`;
+              ctx.fillStyle = `rgba(129, 140, 248, ${alpha * 0.75})`;
             }
           }
 
           ctx.fillText(item.text, col.x, charY);
-          ctx.shadowBlur = 0;
         }
       });
     }

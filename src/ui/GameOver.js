@@ -11,6 +11,7 @@
 import confetti from 'canvas-confetti';
 import { sound } from '../systems/SoundFX.js';
 import { storage } from '../systems/StorageManager.js';
+import { Icons } from './icons.js';
 
 export class GameOver {
   constructor({
@@ -45,10 +46,10 @@ export class GameOver {
   }
 
   getPerformanceTier(score, correct) {
-    if (score >= 350 || correct === 3) return '⭐ Perfect Run · Lead SRE Architect';
-    if (score >= 200 || correct === 2) return '🛡️ Production Rescue Specialist';
-    if (score >= 100 || correct === 1) return '💻 Junior On-Call Operator';
-    return '🌱 DevOps Apprentice';
+    if (score >= 350 || correct === 3) return 'Flawless Run · Principal SRE Architect';
+    if (score >= 200 || correct === 2) return 'Production Rescue Specialist';
+    if (score >= 100 || correct === 1) return 'On-Call Systems Engineer';
+    return 'DevOps Apprentice';
   }
 
   render() {
@@ -94,7 +95,7 @@ export class GameOver {
             </div>
             <div class="result-stat-box">
               <span class="result-stat-label">Streak</span>
-              <span class="result-stat-val text-amber">${stats.maxStreak} 🔥</span>
+              <span class="result-stat-val text-amber">${stats.maxStreak}</span>
             </div>
           </div>
 
@@ -124,19 +125,19 @@ export class GameOver {
           <!-- Actions -->
           <div class="results-actions">
             <button class="btn btn-primary" id="btn-results-leaderboard">
-              <span>🏆</span>
+              <span class="btn-icon">${Icons.trophy(15)}</span>
               <span>View Leaderboard</span>
             </button>
             <button class="btn btn-secondary" id="btn-results-playagain">
-              <span>⚡</span>
+              <span class="btn-icon">${Icons.refresh(15)}</span>
               <span>Play Again</span>
             </button>
             <button class="btn btn-secondary" id="btn-results-next">
-              <span>👤</span>
+              <span class="btn-icon">${Icons.user(15)}</span>
               <span>Next Player</span>
             </button>
             <button class="btn btn-secondary" id="btn-results-menu">
-              <span>🏠</span>
+              <span class="btn-icon">${Icons.arrowLeft(15)}</span>
               <span>Menu</span>
             </button>
           </div>

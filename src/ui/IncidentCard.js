@@ -13,6 +13,7 @@
  */
 
 import { sound } from '../systems/SoundFX.js';
+import { Icons } from './icons.js';
 
 export class IncidentCard {
   constructor({ onSelectAction }) {
@@ -69,7 +70,7 @@ export class IncidentCard {
     const clueHtml = inc.clue
       ? `
         <div class="deck-clue-badge">
-          <span class="clue-icon">⚡</span>
+          <span class="clue-icon">${Icons.terminal(14)}</span>
           <span class="clue-text">${this.escapeHtml(inc.clue)}</span>
         </div>
       `
@@ -118,17 +119,17 @@ export class IncidentCard {
             
             <!-- Dynamic Directional Stamps (Scale & Fade with Drag) -->
             <div class="swipe-stamp stamp-left" id="stamp-left">
-              <span class="stamp-icon">👈</span>
+              <span class="stamp-icon">${Icons.arrowLeft(16)}</span>
               <span class="stamp-label">${this.escapeHtml(inc.leftAction.title.toUpperCase())}</span>
             </div>
             <div class="swipe-stamp stamp-right" id="stamp-right">
               <span class="stamp-label">${this.escapeHtml(inc.rightAction.title.toUpperCase())}</span>
-              <span class="stamp-icon">👉</span>
+              <span class="stamp-icon">${Icons.arrowRight(16)}</span>
             </div>
 
             <!-- Card Header: Severity & Category -->
             <div class="deck-card-header">
-              <span class="severity-pill severity-${inc.severity}">${inc.severity} severity</span>
+              <span class="severity-pill severity-${inc.severity.toLowerCase()}">${inc.severity} severity</span>
               <span class="deck-category">${inc.category}</span>
             </div>
 
@@ -141,13 +142,13 @@ export class IncidentCard {
             <!-- Integrated In-Card Decision Choices Tray -->
             <div class="deck-decision-tray">
               <div class="deck-choice-card choice-left" id="choice-preview-left">
-                <div class="choice-tag">👈 Swipe Left</div>
+                <div class="choice-tag"><span class="choice-arrow">${Icons.arrowLeft(12)}</span><span>Swipe left</span></div>
                 <div class="choice-title">${inc.leftAction.title}</div>
                 <div class="choice-desc">${inc.leftAction.description}</div>
               </div>
 
               <div class="deck-choice-card choice-right" id="choice-preview-right">
-                <div class="choice-tag">Swipe Right 👉</div>
+                <div class="choice-tag"><span>Swipe right</span><span class="choice-arrow">${Icons.arrowRight(12)}</span></div>
                 <div class="choice-title">${inc.rightAction.title}</div>
                 <div class="choice-desc">${inc.rightAction.description}</div>
               </div>
@@ -155,9 +156,9 @@ export class IncidentCard {
 
             <!-- Drag Prompt Cue at Bottom of Active Card -->
             <div class="deck-swipe-prompt">
-              <span class="prompt-arrow">◀ Swipe Left</span>
-              <span class="prompt-center">Drag or flick to choose</span>
-              <span class="prompt-arrow">Swipe Right ▶</span>
+              <span class="prompt-arrow"><span class="prompt-icon">${Icons.arrowLeft(12)}</span> Swipe left</span>
+              <span class="prompt-center">Drag or flick to decide</span>
+              <span class="prompt-arrow">Swipe right <span class="prompt-icon">${Icons.arrowRight(12)}</span></span>
             </div>
           </div>
 
@@ -167,7 +168,7 @@ export class IncidentCard {
         <div class="deck-controls-row">
           <button type="button" class="deck-trigger-btn trigger-left" id="deck-btn-left" aria-label="Swipe Left to select ${inc.leftAction.title}">
             <span class="trigger-shortcut">[←]</span>
-            <span class="trigger-icon">${inc.leftAction.icon || '👈'}</span>
+            <span class="trigger-icon">${Icons.arrowLeft(14)}</span>
             <span class="trigger-title">${inc.leftAction.title}</span>
           </button>
 
@@ -178,7 +179,7 @@ export class IncidentCard {
 
           <button type="button" class="deck-trigger-btn trigger-right" id="deck-btn-right" aria-label="Swipe Right to select ${inc.rightAction.title}">
             <span class="trigger-title">${inc.rightAction.title}</span>
-            <span class="trigger-icon">${inc.rightAction.icon || '👉'}</span>
+            <span class="trigger-icon">${Icons.arrowRight(14)}</span>
             <span class="trigger-shortcut">[→]</span>
           </button>
         </div>
