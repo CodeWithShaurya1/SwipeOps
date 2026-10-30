@@ -30,23 +30,12 @@ export class MainMenu {
           <h1 class="hero-title"><span class="brand-swipe">SWIPE</span><span class="brand-ops highlight-cyan">OPS</span></h1>
           <p class="hero-subtitle">The Production Rescue Mission</p>
           <p class="hero-tagline">
-            Three critical incidents. 45 seconds. Can you keep the cluster online?
+            Three production outages. 45 seconds on the clock. Triage alerts and keep the cluster alive.
           </p>
         </div>
 
-        <!-- Continuous Organic CI/CD Delivery Pipeline -->
+        <!-- Real-Time Delivery Pipeline Visualisation -->
         <div class="live-pipeline-rail pipeline-container">
-          <div class="rail-header">
-            <div class="rail-meta">
-              <span class="rail-tag">Delivery workflow</span>
-              <span class="rail-sub">Cluster rollout · Runner 04</span>
-            </div>
-            <div class="rail-live-status">
-              <span class="status-indicator-dot"></span>
-              <span class="status-indicator-label">Pipeline Active</span>
-            </div>
-          </div>
-
           <!-- Continuous Flow Track with Organic Nodes -->
           <div class="continuous-pipeline-flow">
             <!-- Stage 1: Source -->
@@ -104,15 +93,17 @@ export class MainMenu {
               </div>
             </div>
 
-            <div class="flow-connector connector-idle"></div>
+            <div class="flow-connector connector-active">
+              <div class="flow-packet"></div>
+            </div>
 
             <!-- Stage 5: Monitor -->
-            <div class="flow-stage stage-pass">
+            <div class="flow-stage stage-active">
               <div class="flow-stage-head">
                 <div class="flow-icon-bubble">${Icons.activity(16)}</div>
                 <div class="flow-stage-info">
                   <span class="flow-stage-name">Monitor</span>
-                  <span class="flow-stage-status status-pass">Active</span>
+                  <span class="flow-stage-status status-active">Active</span>
                 </div>
               </div>
             </div>
