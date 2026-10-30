@@ -226,6 +226,23 @@ export class StorageManager {
   }
 
   /**
+   * Compatibility alias for older client caches
+   */
+  async checkEnrollmentEligibility(enrollment) {
+    const res = await this.checkStudentStatus(enrollment);
+    if (!res.eligible && res.status === 'ALREADY_PLAYED') {
+      const best = res.student ? res.student.best_score || 0 : 0;
+      return {
+        eligible: false,
+        status: 'ALREADY_PLAYED',
+        student: res.student,
+        message: `Enrollment ${enrollment} already recorded a score (${best} pts).`
+      };
+    }
+    return res;
+  }
+
+  /**
    * Start or resume an official game attempt.
    * Atomically registers new student or consumes authorized replay.
    */

@@ -137,6 +137,13 @@ export class Registration {
                     <span class="btn-icon">${Icons.arrowRight(15)}</span>
                   </button>
                 </div>
+
+                <div class="reg-footer-link-row">
+                  <button type="button" class="btn-text-link" id="btn-reg-admin-replay">
+                    <span class="btn-icon">${Icons.key(13)}</span>
+                    <span>Already played? Enter Admin Key to play again once</span>
+                  </button>
+                </div>
               </form>
             </div>
           </div>
@@ -150,6 +157,7 @@ export class Registration {
     const enrollInput = container.querySelector('#reg-enrollment');
     const errBox = container.querySelector('#reg-error');
     const submitBtn = container.querySelector('#btn-reg-submit');
+    const footerAdminBtn = container.querySelector('#btn-reg-admin-replay');
 
     nameInput.focus();
 
@@ -157,6 +165,15 @@ export class Registration {
       sound.playClick();
       this.onBackToMenu();
     });
+
+    if (footerAdminBtn) {
+      footerAdminBtn.addEventListener('click', () => {
+        sound.playClick();
+        const enroll = normalizeEnrollment(enrollInput.value) || '';
+        const name = normalizeName(nameInput.value) || 'Operator';
+        this.openAdminReplayModal({ enrollment_number: enroll, student_name: name });
+      });
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -193,10 +210,29 @@ export class Registration {
           student_name: name,
           best_score: check.bestScore || 0
         };
-        if (typeof this.onAccessRestricted === 'function') {
-          this.onAccessRestricted(studentInfo);
-        } else {
-          this.renderAlreadyPlayed(container, studentInfo);
+
+        // Render error banner with direct action to unlock replay right here
+        errBox.innerHTML = `
+          <div class="reg-error-msg-text">
+            Enrollment <strong>${this.escapeHtml(enrollment)}</strong> already recorded a score (${studentInfo.best_score ?? 0} pts).
+          </div>
+          <div class="reg-error-subtext">
+            Single official attempt policy active. Contact event admin to play again.
+          </div>
+          <button type="button" class="btn-error-action" id="btn-err-admin-key">
+            <span class="btn-icon">${Icons.key(14)}</span>
+            <span>ENTER ADMIN KEY TO PLAY AGAIN</span>
+          </button>
+        `;
+        errBox.style.display = 'block';
+
+        const unlockBtn = errBox.querySelector('#btn-err-admin-key');
+        if (unlockBtn) {
+          unlockBtn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            sound.playClick();
+            this.openAdminReplayModal(studentInfo);
+          });
         }
         return;
       }
@@ -264,19 +300,30 @@ export class Registration {
             </div>
           </div>
 
-          <div class="reg-actions-row" style="justify-content: center; gap: 14px;">
-            <button class="btn btn-secondary" id="btn-played-menu">
-              <span class="btn-icon">${Icons.arrowLeft(15)}</span>
-              <span>Return to Menu</span>
+          <div class="reg-actions-row" style="justify-content: center; flex-direction: column; gap: 10px;">
+            <button class="btn btn-primary" id="btn-played-unlock" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #0284c7, #38bdf8); border-color: #38bdf8; font-weight: 800;">
+              <span class="btn-icon">${Icons.key(15)}</span>
+              <span>Enter Admin Key to Play Again</span>
             </button>
-            <button class="btn btn-primary" id="btn-played-lb">
-              <span class="btn-icon">${Icons.trophy(15)}</span>
-              <span>Public Leaderboard</span>
-            </button>
+            <div style="display: flex; gap: 10px; width: 100%;">
+              <button class="btn btn-secondary" id="btn-played-menu" style="flex: 1; justify-content: center;">
+                <span class="btn-icon">${Icons.arrowLeft(15)}</span>
+                <span>Return to Menu</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-played-lb" style="flex: 1; justify-content: center;">
+                <span class="btn-icon">${Icons.trophy(15)}</span>
+                <span>Leaderboard</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     `;
+
+    container.querySelector('#btn-played-unlock').addEventListener('click', () => {
+      sound.playClick();
+      this.openAdminReplayModal(student);
+    });
 
     container.querySelector('#btn-played-menu').addEventListener('click', () => {
       sound.playClick();
@@ -290,6 +337,180 @@ export class Registration {
       } else {
         this.onBackToMenu();
       }
+    });
+  }
+
+  /**
+   * Dedicated Replay Popup: Enter Admin Key to Play Again Once
+   */
+  openAdminReplayModal(studentInfo = {}) {
+    const existing = document.getElementById('admin-replay-modal');
+    if (existing) existing.remove();
+
+    const rawEnrollment = studentInfo.enrollment_number || studentInfo.enrollment || '';
+    const studentName = studentInfo.student_name || studentInfo.name || 'Operator';
+    const maskedEnroll = rawEnrollment ? maskEnrollment(rawEnrollment) : 'Required';
+
+    const modal = document.createElement('div');
+    modal.id = 'admin-replay-modal';
+    modal.className = 'replay-popup-backdrop';
+
+    modal.innerHTML = `
+      <div class="replay-popup-card glass-surface">
+        <div class="admin-key-header">
+          <div class="admin-key-icon-wrap" style="color: var(--color-amber); background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4);">
+            ${Icons.key(28)}
+          </div>
+          <div class="event-badge" style="margin-bottom: 8px;">
+            <span class="badge-dot" style="background: var(--color-amber);"></span>
+            <span>Admin Authorization</span>
+          </div>
+          <h2 class="admin-key-title">Play Again Authorization</h2>
+          <p class="admin-key-desc">
+            Enter administrator key to grant <strong>1 replay attempt</strong> for:<br/>
+            <strong>${this.escapeHtml(studentName)}</strong> · <span class="mono text-cyan">${this.escapeHtml(maskedEnroll)}</span>
+          </p>
+        </div>
+
+        <form id="replay-unlock-form" novalidate>
+          <div class="admin-key-input-group">
+            <label class="admin-key-label" for="replay-key-input">
+              <span>Administrator Key</span>
+              <span class="req-star">*</span>
+            </label>
+            <div class="input-wrapper admin-key-wrapper">
+              <span class="input-icon">${Icons.key(16)}</span>
+              <input 
+                type="password" 
+                id="replay-key-input" 
+                class="reg-input mono" 
+                placeholder="Enter admin key" 
+                required 
+                autocomplete="off"
+              />
+              <button type="button" class="btn-toggle-mask" id="btn-replay-toggle-mask" title="Toggle visibility" tabindex="-1">
+                ${Icons.eye(16)}
+              </button>
+            </div>
+          </div>
+
+          <div id="replay-modal-error" class="reg-error-banner" style="display: none; margin-bottom: 16px;"></div>
+
+          <div class="admin-key-actions">
+            <button type="button" class="btn btn-secondary" id="btn-replay-cancel">
+              <span>Cancel</span>
+            </button>
+            <button type="submit" class="btn btn-primary" id="btn-replay-verify" style="background: linear-gradient(135deg, #0284c7, #38bdf8); border-color: #38bdf8;">
+              <span>Unlock &amp; Play Again</span>
+              <span class="btn-icon">${Icons.zap(15)}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const form = modal.querySelector('#replay-unlock-form');
+    const keyInput = modal.querySelector('#replay-key-input');
+    const toggleBtn = modal.querySelector('#btn-replay-toggle-mask');
+    const cancelBtn = modal.querySelector('#btn-replay-cancel');
+    const verifyBtn = modal.querySelector('#btn-replay-verify');
+    const errBox = modal.querySelector('#replay-modal-error');
+
+    setTimeout(() => keyInput && keyInput.focus(), 60);
+
+    toggleBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const isPass = keyInput.type === 'password';
+      keyInput.type = isPass ? 'text' : 'password';
+      toggleBtn.innerHTML = isPass ? Icons.eyeOff(16) : Icons.eye(16);
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      sound.playClick();
+      modal.remove();
+    });
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      sound.playClick();
+      errBox.style.display = 'none';
+
+      const keyVal = keyInput.value.trim();
+      if (!keyVal) {
+        errBox.textContent = 'Please enter the administrator key.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = `<span>Verifying clearance...</span>`;
+
+      // Determine enrollment
+      let targetEnroll = rawEnrollment;
+      if (!targetEnroll) {
+        const enrollField = this.container ? this.container.querySelector('#reg-enrollment') : null;
+        targetEnroll = enrollField ? normalizeEnrollment(enrollField.value) : '';
+      }
+
+      if (!targetEnroll) {
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = `<span>Unlock &amp; Play Again</span><span class="btn-icon">${Icons.zap(15)}</span>`;
+        errBox.textContent = 'Please enter an enrollment number on the registration card first.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      const res = await storage.unlockWithAdminKey(targetEnroll, keyVal);
+
+      verifyBtn.disabled = false;
+      verifyBtn.innerHTML = `<span>Unlock &amp; Play Again</span><span class="btn-icon">${Icons.zap(15)}</span>`;
+
+      if (!res.success) {
+        errBox.textContent = res.message || 'Invalid administrator key. Authorization denied.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // Success: Render Step 2 (Clearance Granted & Play Again Button)
+      modal.innerHTML = `
+        <div class="replay-popup-card glass-surface" style="text-align: center;">
+          <div class="admin-key-icon-wrap" style="color: var(--color-emerald); background: rgba(57, 217, 160, 0.15); border-color: rgba(57, 217, 160, 0.5); margin: 0 auto 16px;">
+            ${Icons.check(32)}
+          </div>
+
+          <div class="event-badge" style="margin-bottom: 12px; border-color: rgba(57, 217, 160, 0.4); background: rgba(57, 217, 160, 0.12);">
+            <span class="badge-dot" style="background: var(--color-emerald); box-shadow: 0 0 8px var(--color-emerald);"></span>
+            <span style="color: var(--color-emerald);">1 REPLAY ATTEMPT AUTHORIZED</span>
+          </div>
+
+          <h2 class="admin-key-title" style="margin-bottom: 8px;">Replay Clearance Granted!</h2>
+          <p class="admin-key-desc" style="margin-bottom: 24px;">
+            Student <strong>${this.escapeHtml(res.studentName || studentName)}</strong> (<span class="mono text-cyan">${this.escapeHtml(targetEnroll)}</span>) can now play again once.
+          </p>
+
+          <div class="admin-key-actions" style="justify-content: center;">
+            <button type="button" class="btn btn-primary" id="btn-replay-launch-now" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #059669, #10b981); border-color: #34d399; font-weight: 800; padding: 14px 20px;">
+              <span>PLAY AGAIN NOW</span>
+              <span class="btn-icon">${Icons.rocket(16)}</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      modal.querySelector('#btn-replay-launch-now').addEventListener('click', () => {
+        sound.playClick();
+        modal.remove();
+        this.playerData = {
+          name: res.studentName || studentName,
+          enrollment: targetEnroll,
+          attemptId: res.attemptId,
+          attemptNumber: res.attemptNumber,
+          isReplay: true
+        };
+        this.onReadyToLaunch(this.playerData);
+      });
     });
   }
 
