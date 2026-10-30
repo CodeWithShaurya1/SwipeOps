@@ -719,107 +719,127 @@ ALTER TABLE public.devops_arena_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.swipeops_security_config ENABLE ROW LEVEL SECURITY;
 
 -- Deny public direct access to security config
+DROP POLICY IF EXISTS "Deny Public Access Config" ON public.swipeops_security_config;
 CREATE POLICY "Deny Public Access Config" 
 ON public.swipeops_security_config
 FOR ALL 
 USING (false);
 
 -- Leaderboard: Public read
+DROP POLICY IF EXISTS "Public Read Leaderboard View" ON public.swipeops_students;
 CREATE POLICY "Public Read Leaderboard View" 
 ON public.swipeops_students
 FOR SELECT 
 USING (true);
 
 -- Attempts: Read allowed (used by dashboard/client verification)
+DROP POLICY IF EXISTS "Public Read Attempts" ON public.swipeops_attempts;
 CREATE POLICY "Public Read Attempts" 
 ON public.swipeops_attempts
 FOR SELECT 
 USING (true);
 
 -- Deny direct client inserts/updates on students/attempts (must use secure RPCs)
+DROP POLICY IF EXISTS "Deny Direct Insert Students" ON public.swipeops_students;
 CREATE POLICY "Deny Direct Insert Students" 
 ON public.swipeops_students
 FOR INSERT 
 WITH CHECK (false);
 
+DROP POLICY IF EXISTS "Deny Direct Update Students" ON public.swipeops_students;
 CREATE POLICY "Deny Direct Update Students" 
 ON public.swipeops_students
 FOR UPDATE 
 USING (false);
 
+DROP POLICY IF EXISTS "Deny Direct Delete Students" ON public.swipeops_students;
 CREATE POLICY "Deny Direct Delete Students" 
 ON public.swipeops_students
 FOR DELETE 
 USING (false);
 
+DROP POLICY IF EXISTS "Deny Direct Insert Attempts" ON public.swipeops_attempts;
 CREATE POLICY "Deny Direct Insert Attempts" 
 ON public.swipeops_attempts
 FOR INSERT 
 WITH CHECK (false);
 
+DROP POLICY IF EXISTS "Deny Direct Update Attempts" ON public.swipeops_attempts;
 CREATE POLICY "Deny Direct Update Attempts" 
 ON public.swipeops_attempts
 FOR UPDATE 
 USING (false);
 
+DROP POLICY IF EXISTS "Deny Direct Delete Attempts" ON public.swipeops_attempts;
 CREATE POLICY "Deny Direct Delete Attempts" 
 ON public.swipeops_attempts
 FOR DELETE 
 USING (false);
 
 -- Replays: Public read
+DROP POLICY IF EXISTS "Public Read Replays" ON public.swipeops_replays;
 CREATE POLICY "Public Read Replays" 
 ON public.swipeops_replays
 FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Deny Direct Insert Replays" ON public.swipeops_replays;
 CREATE POLICY "Deny Direct Insert Replays" 
 ON public.swipeops_replays
 FOR INSERT 
 WITH CHECK (false);
 
+DROP POLICY IF EXISTS "Deny Direct Update Replays" ON public.swipeops_replays;
 CREATE POLICY "Deny Direct Update Replays" 
 ON public.swipeops_replays
 FOR UPDATE 
 USING (false);
 
+DROP POLICY IF EXISTS "Deny Direct Delete Replays" ON public.swipeops_replays;
 CREATE POLICY "Deny Direct Delete Replays" 
 ON public.swipeops_replays
 FOR DELETE 
 USING (false);
 
 -- Audit Log: Append-only for system/admin, strictly read-only for queries
+DROP POLICY IF EXISTS "Public Read Audit Log" ON public.swipeops_audit_log;
 CREATE POLICY "Public Read Audit Log" 
 ON public.swipeops_audit_log
 FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Deny Direct Update Audit Log" ON public.swipeops_audit_log;
 CREATE POLICY "Deny Direct Update Audit Log" 
 ON public.swipeops_audit_log
 FOR UPDATE 
 USING (false);
 
+DROP POLICY IF EXISTS "Deny Direct Delete Audit Log" ON public.swipeops_audit_log;
 CREATE POLICY "Deny Direct Delete Audit Log" 
 ON public.swipeops_audit_log
 FOR DELETE 
 USING (false);
 
 -- Legacy devops_arena_scores policies
+DROP POLICY IF EXISTS "Public Read Legacy Scores" ON public.devops_arena_scores;
 CREATE POLICY "Public Read Legacy Scores" 
 ON public.devops_arena_scores
 FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Allow Insert Legacy Scores" ON public.devops_arena_scores;
 CREATE POLICY "Allow Insert Legacy Scores" 
 ON public.devops_arena_scores
 FOR INSERT 
 WITH CHECK (final_score >= 0 AND final_score <= 350);
 
+DROP POLICY IF EXISTS "Deny Update Legacy Scores" ON public.devops_arena_scores;
 CREATE POLICY "Deny Update Legacy Scores" 
 ON public.devops_arena_scores
 FOR UPDATE 
 USING (false);
 
+DROP POLICY IF EXISTS "Deny Delete Legacy Scores" ON public.devops_arena_scores;
 CREATE POLICY "Deny Delete Legacy Scores" 
 ON public.devops_arena_scores
 FOR DELETE 
