@@ -838,7 +838,9 @@ export class StorageManager {
           .limit(limit);
 
         if (!error && data && data.length > 0) {
-          const formatted = data.map(s => ({
+          const officialOnly = data.filter(s => !s.is_test && !isTestEnrollment(s.enrollment_number));
+          const listToDisplay = officialOnly.length > 0 ? officialOnly : data;
+          const formatted = listToDisplay.map(s => ({
             enrollment_number: s.enrollment_number,
             enrollment_masked: maskEnrollment(s.enrollment_number),
             student_name: s.student_name,

@@ -263,36 +263,12 @@ export class Registration {
           best_score: check.bestScore || 0
         };
 
-        // When the user enters the same credentials twice (attemptCount >= 2), reveal admin replay option on this page!
-        if (attemptCount >= 2) {
-          if (adminBox) {
-            adminBox.style.display = 'flex';
-            adminBox.classList.add('revealed-animation');
-            adminBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-          errBox.innerHTML = `
-            <div class="reg-error-msg-text">
-              🔒 Enrollment <strong>${this.escapeHtml(enrollment)}</strong> already recorded an official attempt (${studentInfo.best_score ?? 0} pts).
-            </div>
-            <div class="reg-error-subtext">
-              Credentials entered twice. Admin Key Re-access has been unlocked below to authorize a replay.
-            </div>
-          `;
-          errBox.style.display = 'block';
+        if (typeof this.onAccessRestricted === 'function') {
+          this.onAccessRestricted(studentInfo);
           return;
         }
 
-        // 1st time entering already-played credentials: keep hidden and prompt to re-enter
-        if (adminBox) adminBox.style.display = 'none';
-        errBox.innerHTML = `
-          <div class="reg-error-msg-text">
-            ⚠️ Single official attempt policy active. Enrollment <strong>${this.escapeHtml(enrollment)}</strong> has already recorded a score (${studentInfo.best_score ?? 0} pts).
-          </div>
-          <div class="reg-error-subtext">
-            Re-enter or submit the same credentials again to unlock Admin Key Re-access on this page.
-          </div>
-        `;
-        errBox.style.display = 'block';
+        this.renderAlreadyPlayed(container, studentInfo);
         return;
       }
 
@@ -320,6 +296,10 @@ export class Registration {
    * Dedicated Blocking View: YOU HAVE ALREADY PLAYED!
    */
   renderAlreadyPlayed(container, student) {
+    if (typeof this.onAccessRestricted === 'function') {
+      this.onAccessRestricted(student);
+      return;
+    }
     container.innerHTML = `
       <div class="registration-view">
         <div class="reg-card glass-surface already-played-card" style="max-width: 560px; margin: 40px auto; text-align: center; border-color: rgba(244, 63, 94, 0.4);">
