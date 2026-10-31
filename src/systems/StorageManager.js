@@ -54,18 +54,49 @@ export class StorageManager {
 
   _initLocalStore() {
     if (typeof localStorage === 'undefined') return;
-    if (!localStorage.getItem(LOCAL_STUDENTS_KEY)) {
+
+    // Purge legacy storage keys permanently
+    try {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      localStorage.removeItem(SUBMITTED_SESSIONS_KEY);
+      localStorage.removeItem('swipeops_students');
+      localStorage.removeItem('swipeops_attempts');
+      localStorage.removeItem('swipeops_replays');
+      localStorage.removeItem('swipeops_audit_log');
+      localStorage.removeItem('devops_arena_scores');
+      localStorage.removeItem('devops_arena_user');
+      localStorage.removeItem('devops_arena_session');
+    } catch (_) {}
+
+    // When Cloud Supabase is configured and live, purge extra local entries
+    if (this.isCloudConfigured()) {
+      this.purgeExtraLocalData();
+    } else {
+      if (!localStorage.getItem(LOCAL_STUDENTS_KEY)) {
+        localStorage.setItem(LOCAL_STUDENTS_KEY, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(LOCAL_ATTEMPTS_KEY)) {
+        localStorage.setItem(LOCAL_ATTEMPTS_KEY, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(LOCAL_REPLAYS_KEY)) {
+        localStorage.setItem(LOCAL_REPLAYS_KEY, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(LOCAL_AUDIT_LOG_KEY)) {
+        localStorage.setItem(LOCAL_AUDIT_LOG_KEY, JSON.stringify([]));
+      }
+    }
+  }
+
+  purgeExtraLocalData() {
+    if (typeof localStorage === 'undefined') return;
+    try {
       localStorage.setItem(LOCAL_STUDENTS_KEY, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(LOCAL_ATTEMPTS_KEY)) {
       localStorage.setItem(LOCAL_ATTEMPTS_KEY, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(LOCAL_REPLAYS_KEY)) {
       localStorage.setItem(LOCAL_REPLAYS_KEY, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(LOCAL_AUDIT_LOG_KEY)) {
       localStorage.setItem(LOCAL_AUDIT_LOG_KEY, JSON.stringify([]));
-    }
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      localStorage.removeItem(SUBMITTED_SESSIONS_KEY);
+    } catch (_) {}
   }
 
   _generateUUID() {
@@ -806,10 +837,9 @@ export class StorageManager {
           .order('completed_at', { ascending: true })
           .limit(limit);
 
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data)) {
           const officialOnly = data.filter(s => !isTestEnrollment(s.enrollment_number));
-          const listToDisplay = officialOnly.length > 0 ? officialOnly : data;
-          const formatted = listToDisplay.map(s => ({
+          const formatted = officialOnly.map(s => ({
             enrollment_number: s.enrollment_number,
             enrollment_masked: maskEnrollment(s.enrollment_number),
             student_name: s.student_name,
@@ -1243,6 +1273,15 @@ export class StorageManager {
 
   async adminGetAuditLog() {
     return this._getLocal(LOCAL_AUDIT_LOG_KEY);
+  }
+
+  async resetTournamentRecords(adminKey) {
+    const isValid = await this.verifyAdminKey(adminKey);
+    if (!isValid) {
+      return { success: false, message: 'Invalid administrator key.' };
+    }
+    this.purgeExtraLocalData();
+    return this.adminResetAllData('Organizer');
   }
 
   async adminResetAllData(adminName = 'Lead SRE Admin') {
