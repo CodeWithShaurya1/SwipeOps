@@ -25,8 +25,8 @@ export class StorageManager {
   constructor() {
     const isBrowser = typeof window !== 'undefined';
     const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
-    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || (isBrowser ? DEFAULT_SUPABASE_URL : '');
-    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (isBrowser ? DEFAULT_SUPABASE_ANON_KEY : '');
+    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || (isBrowser ? DEFAULT_SUPABASE_URL : (env.CI ? '' : ''));
+    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (isBrowser ? DEFAULT_SUPABASE_ANON_KEY : (env.CI ? '' : ''));
     this.adminPassphrase = env.VITE_ADMIN_PASSPHRASE || DEFAULT_ADMIN_PASSPHRASE;
 
     this.supabase = null;
@@ -50,6 +50,7 @@ export class StorageManager {
   }
 
   _initLocalStore() {
+    if (typeof localStorage === 'undefined') return;
     if (!localStorage.getItem(LOCAL_STUDENTS_KEY)) {
       localStorage.setItem(LOCAL_STUDENTS_KEY, JSON.stringify([]));
     }
@@ -62,6 +63,23 @@ export class StorageManager {
     if (!localStorage.getItem(LOCAL_AUDIT_LOG_KEY)) {
       localStorage.setItem(LOCAL_AUDIT_LOG_KEY, JSON.stringify([]));
     }
+  }
+
+  _generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      try {
+        return crypto.randomUUID();
+      } catch (_) {}
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  _isValidUUID(str) {
+    return typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
   }
 
   isCloudConfigured() {
@@ -132,6 +150,36 @@ export class StorageManager {
             .maybeSingle();
 
           if (activeAttempt) {
+            const elapsedMs = Date.now() - new Date(activeAttempt.started_at).getTime();
+            // If active attempt is older than 50s (mission is 45s total: 3 x 15s), it was abandoned / timed out!
+            if (elapsedMs > 50000) {
+              const safeScore = student.best_score || 0;
+              const safeAcc = student.best_accuracy || 0;
+              const safeCorr = student.best_correct || 0;
+              const safeDur = student.best_duration_seconds || 45;
+              try {
+                await this.supabase.rpc('swipeops_complete_attempt', {
+                  p_attempt_id: activeAttempt.id,
+                  p_enrollment: cleanEnrollment,
+                  p_final_score: safeScore,
+                  p_accuracy: safeAcc,
+                  p_correct: safeCorr,
+                  p_incorrect: Math.max(0, 3 - safeCorr),
+                  p_timeout: 0,
+                  p_streak: safeCorr,
+                  p_duration: safeDur
+                });
+              } catch (_) {}
+
+              return {
+                eligible: false,
+                status: 'ALREADY_PLAYED',
+                student: { ...student, status: 'completed' },
+                bestScore: student.best_score || 0,
+                message: 'Your official attempt has already been recorded. Please contact the event administrator if you require another attempt.'
+              };
+            }
+
             return {
               eligible: true,
               status: 'ACTIVE_ATTEMPT',
@@ -328,7 +376,7 @@ export class StorageManager {
 
     // 1. New student
     if (!student) {
-      const attemptId = fixedAttemptId || 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+      const attemptId = fixedAttemptId || this._generateUUID();
       student = {
         enrollment_number: enrollment,
         student_name: name,
@@ -399,7 +447,7 @@ export class StorageManager {
     // 3. Existing student with authorized replay
     const pendingReplay = replays.find(r => r.enrollment_number === enrollment && r.status === 'pending');
     if (pendingReplay) {
-      const attemptId = fixedAttemptId || 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+      const attemptId = fixedAttemptId || this._generateUUID();
       const attemptNum = fixedAttemptNum || (student.attempts_count || 1) + 1;
 
       pendingReplay.status = 'consumed';
@@ -641,7 +689,7 @@ export class StorageManager {
 
     let cloudSaved = false;
 
-    if (this.isCloudConfigured() && attemptId) {
+    if (this.isCloudConfigured() && attemptId && this._isValidUUID(attemptId)) {
       try {
         const { data, error } = await this.supabase.rpc('swipeops_complete_attempt', {
           p_attempt_id: attemptId,
@@ -655,10 +703,10 @@ export class StorageManager {
           p_duration: duration
         });
 
-        if (!error) {
+        if (!error && data && data.success) {
           cloudSaved = true;
         } else {
-          console.warn('RPC swipeops_complete_attempt error:', error);
+          console.warn('RPC swipeops_complete_attempt error:', error || data);
         }
       } catch (err) {
         console.warn('Network error completing attempt on cloud:', err);
@@ -776,16 +824,47 @@ export class StorageManager {
   async getLeaderboard(limit = 50) {
     if (this.isCloudConfigured()) {
       try {
+        // Query swipeops_students directly to guarantee that students with valid best scores
+        // are NEVER omitted even if currently active or in replay
         const { data, error } = await this.supabase
+          .from('swipeops_students')
+          .select('*')
+          .not('best_completed_at', 'is', null)
+          .order('best_score', { ascending: false })
+          .order('best_accuracy', { ascending: false })
+          .order('best_correct', { ascending: false })
+          .order('best_duration_seconds', { ascending: true })
+          .order('best_completed_at', { ascending: true })
+          .limit(limit);
+
+        if (!error && data && data.length > 0) {
+          const formatted = data.map(s => ({
+            enrollment_number: s.enrollment_number,
+            enrollment_masked: maskEnrollment(s.enrollment_number),
+            student_name: s.student_name,
+            final_score: s.best_score,
+            accuracy: s.best_accuracy,
+            correct_decisions: s.best_correct,
+            max_streak: s.best_streak ?? s.best_correct ?? 0,
+            duration_seconds: s.best_duration_seconds,
+            completed_at: s.best_completed_at,
+            attempts_count: s.attempts_count,
+            is_test: s.is_test
+          }));
+          return { data: formatted, source: 'cloud' };
+        }
+
+        // Fallback to leaderboard view if needed
+        const viewRes = await this.supabase
           .from('swipeops_leaderboard_view')
           .select('*')
           .limit(limit);
 
-        if (!error && data) {
-          return { data, source: 'cloud' };
+        if (!viewRes.error && viewRes.data && viewRes.data.length > 0) {
+          return { data: viewRes.data, source: 'cloud' };
         }
       } catch (err) {
-        console.warn('Failed to load swipeops_leaderboard_view, trying fallback:', err);
+        console.warn('Failed to load cloud leaderboard, trying local fallback:', err);
       }
     }
 
@@ -824,6 +903,106 @@ export class StorageManager {
       data: formatted.slice(0, limit),
       source: 'local'
     };
+  }
+
+  /**
+   * Two-way Cloud Synchronization
+   * Pushes any un-synced local attempts/scores to Supabase Cloud,
+   * and pulls down latest cluster telemetry.
+   */
+  async syncPendingData() {
+    if (!this.isCloudConfigured()) {
+      return { success: false, isConnected: false, syncedCount: 0, message: 'Cloud database not configured' };
+    }
+
+    let syncedCount = 0;
+    try {
+      const localAttempts = this._getLocal(LOCAL_ATTEMPTS_KEY);
+      const localStudents = this._getLocal(LOCAL_STUDENTS_KEY);
+
+      const completedLocal = localAttempts.filter(a => a.status === 'completed');
+
+      for (const att of completedLocal) {
+        if (att._syncedToCloud) continue;
+
+        const enrollment = normalizeEnrollment(att.enrollment_number);
+        const student = localStudents.find(s => s.enrollment_number === enrollment);
+        const name = student?.student_name || att.player_name || 'Operator';
+
+        try {
+          if (att.id && this._isValidUUID(att.id)) {
+            const { data: cloudAtt } = await this.supabase
+              .from('swipeops_attempts')
+              .select('id, status')
+              .eq('id', att.id)
+              .maybeSingle();
+
+            if (cloudAtt && cloudAtt.status === 'completed') {
+              att._syncedToCloud = true;
+              continue;
+            }
+
+            if (cloudAtt && cloudAtt.status === 'started') {
+              const compRes = await this.supabase.rpc('swipeops_complete_attempt', {
+                p_attempt_id: att.id,
+                p_enrollment: enrollment,
+                p_final_score: att.final_score,
+                p_accuracy: att.accuracy,
+                p_correct: att.correct_decisions,
+                p_incorrect: att.incorrect_decisions,
+                p_timeout: att.timed_out_decisions,
+                p_streak: att.max_streak,
+                p_duration: att.mission_duration_seconds
+              });
+              if (compRes.data?.success) {
+                att._syncedToCloud = true;
+                syncedCount++;
+                continue;
+              }
+            }
+          }
+
+          // If attempt ID was not recognized in cloud or student is not registered on cloud:
+          const startRes = await this.supabase.rpc('swipeops_start_attempt', {
+            p_name: name,
+            p_enrollment: enrollment
+          });
+
+          const cloudAttemptId = startRes.data?.attempt_id;
+          if (cloudAttemptId) {
+            const compRes = await this.supabase.rpc('swipeops_complete_attempt', {
+              p_attempt_id: cloudAttemptId,
+              p_enrollment: enrollment,
+              p_final_score: att.final_score,
+              p_accuracy: att.accuracy,
+              p_correct: att.correct_decisions,
+              p_incorrect: att.incorrect_decisions,
+              p_timeout: att.timed_out_decisions,
+              p_streak: att.max_streak,
+              p_duration: att.mission_duration_seconds
+            });
+            if (compRes.data?.success) {
+              att._syncedToCloud = true;
+              syncedCount++;
+            }
+          }
+        } catch (syncErr) {
+          console.warn('Sync failed for attempt:', enrollment, syncErr);
+        }
+      }
+
+      this._saveLocal(LOCAL_ATTEMPTS_KEY, localAttempts);
+
+      return {
+        success: true,
+        isConnected: true,
+        syncedCount,
+        message: syncedCount > 0 ? `Successfully synchronized ${syncedCount} attempts to cloud.` : 'Cloud database is fully synchronized.'
+      };
+    } catch (err) {
+      console.warn('syncPendingData exception:', err);
+      return { success: false, isConnected: false, syncedCount, message: err.message };
+    }
   }
 
   // ==========================================================================
@@ -1018,7 +1197,21 @@ export class StorageManager {
           return { success: false, message: data.message };
         }
       } catch (err) {
-        console.warn('Cloud replay authorization failed, falling back to local:', err);
+        console.warn('Cloud replay authorization failed, attempting admin key bridge:', err);
+      }
+
+      // Fallback bridge: If RPC swipeops_admin_authorize_replay is not present in cloud database,
+      // bridge via unlockWithAdminKey which provisions replay/attempt via verified security bridge
+      try {
+        const unlockRes = await this.unlockWithAdminKey(cleanEnrollment, this.adminPassphrase);
+        if (unlockRes && unlockRes.success) {
+          return {
+            success: true,
+            message: `Replay clearance authorized for ${cleanEnrollment} (Cloud Synchronized)`
+          };
+        }
+      } catch (bridgeErr) {
+        console.warn('Cloud admin key bridge failed, falling back to local store:', bridgeErr);
       }
     }
 

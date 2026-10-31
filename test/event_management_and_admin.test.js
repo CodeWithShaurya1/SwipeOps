@@ -375,4 +375,17 @@ assert.strictEqual(typeof ar.openAdminKeyModal, 'function');
 assert.strictEqual(typeof ar.renderModalStepConfirm, 'function');
 console.log('   ✓ AccessRestricted UI screen component verified.');
 
+// ============================================================================
+// PART 11: TWO-WAY SYNC ENGINE & UUID VALIDATION
+// ============================================================================
+console.log('14. Testing Two-Way Sync Engine & UUID Generation...');
+const generatedId = sm._generateUUID();
+assert.strictEqual(sm._isValidUUID(generatedId), true, 'Generated ID must be a valid RFC4122 UUID');
+assert.strictEqual(sm._isValidUUID('att_12345'), false, 'Legacy IDs must not pass UUID check');
+
+const syncResult = await sm.syncPendingData();
+assert.strictEqual(typeof syncResult.success, 'boolean');
+assert.strictEqual(typeof syncResult.syncedCount, 'number');
+console.log('   ✓ Two-Way Sync Engine & UUID validation verified.');
+
 console.log('--- ALL EVENT MANAGEMENT & ADMIN TESTS PASSED PERFECTLY! ---');

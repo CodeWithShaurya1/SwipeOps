@@ -142,7 +142,7 @@ SELECT
     s.attempts_count,
     s.is_test
 FROM public.swipeops_students s
-WHERE s.status = 'completed' AND s.best_completed_at IS NOT NULL
+WHERE s.best_completed_at IS NOT NULL
 ORDER BY 
     s.best_score DESC,
     s.best_accuracy DESC,

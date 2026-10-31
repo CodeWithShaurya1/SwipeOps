@@ -220,9 +220,28 @@ export class Leaderboard {
     this.container.querySelector('#btn-lb-cloud-sync').addEventListener('click', async () => {
       sound.playClick();
       const syncBtn = this.container.querySelector('#btn-lb-cloud-sync');
-      syncBtn.disabled = true;
-      syncBtn.innerHTML = `<span>⚙ SYNCING...</span>`;
+      if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = `<span>⚙ SYNCING...</span>`;
+      }
+
+      const syncRes = await storage.syncPendingData();
       await this.loadData();
+
+      const refreshedBtn = this.container.querySelector('#btn-lb-cloud-sync');
+      if (refreshedBtn) {
+        if (syncRes.syncedCount > 0) {
+          refreshedBtn.innerHTML = `<span>✓ SYNCED (${syncRes.syncedCount})</span>`;
+        } else {
+          refreshedBtn.innerHTML = `<span>✓ IN SYNC</span>`;
+        }
+        setTimeout(() => {
+          if (refreshedBtn) {
+            refreshedBtn.disabled = false;
+            refreshedBtn.innerHTML = `<span>⚙ CLOUD SYNC</span>`;
+          }
+        }, 2500);
+      }
     });
 
     this.container.querySelector('#btn-lb-refresh').addEventListener('click', async () => {
