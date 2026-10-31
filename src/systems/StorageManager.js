@@ -28,8 +28,8 @@ export class StorageManager {
   constructor() {
     const isBrowser = typeof window !== 'undefined';
     const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
-    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || (isBrowser ? DEFAULT_SUPABASE_URL : (env.CI ? '' : ''));
-    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (isBrowser ? DEFAULT_SUPABASE_ANON_KEY : (env.CI ? '' : ''));
+    this.supabaseUrl = env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || (isBrowser ? DEFAULT_SUPABASE_URL : '');
+    this.supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (isBrowser ? DEFAULT_SUPABASE_ANON_KEY : '');
     this.adminPassphrase = env.VITE_ADMIN_PASSPHRASE || DEFAULT_ADMIN_PASSPHRASE;
 
     this.supabase = null;
@@ -152,6 +152,30 @@ export class StorageManager {
       return { eligible: false, status: 'INVALID', message: 'Enrollment number is required' };
     }
 
+    // 0. Check for active local attempt in progress (session resume within 50s)
+    const attempts = this._getLocal(LOCAL_ATTEMPTS_KEY);
+    const students = this._getLocal(LOCAL_STUDENTS_KEY);
+    const student = students.find(s => s.enrollment_number === cleanEnrollment);
+    const activeAttempt = attempts.find(a => a.enrollment_number === cleanEnrollment && a.status === 'started');
+    if (activeAttempt) {
+      const elapsedMs = Date.now() - new Date(activeAttempt.started_at).getTime();
+      if (elapsedMs <= 50000) {
+        return {
+          eligible: true,
+          status: 'ACTIVE_ATTEMPT',
+          student: student || { enrollment_number: cleanEnrollment, student_name: activeAttempt.player_name },
+          attempt: activeAttempt,
+          message: 'Active mission in progress. Resuming...'
+        };
+      } else {
+        activeAttempt.status = 'abandoned';
+        activeAttempt.completed_at = new Date().toISOString();
+        if (student) student.status = 'completed';
+        this._saveLocal(LOCAL_ATTEMPTS_KEY, attempts);
+        this._saveLocal(LOCAL_STUDENTS_KEY, students);
+      }
+    }
+
     if (this.isCloudConfigured()) {
       try {
         // 1. Check for pending authorization (replay granted by admin)
@@ -202,32 +226,8 @@ export class StorageManager {
     }
 
     // Local Standalone Check
-    const students = this._getLocal(LOCAL_STUDENTS_KEY);
-    const student = students.find(s => s.enrollment_number === cleanEnrollment);
-
     if (!student) {
       return { eligible: true, status: 'NOT_FOUND', message: 'First-time registration' };
-    }
-
-    const attempts = this._getLocal(LOCAL_ATTEMPTS_KEY);
-    const activeAttempt = attempts.find(a => a.enrollment_number === cleanEnrollment && a.status === 'started');
-    if (activeAttempt) {
-      const elapsedMs = Date.now() - new Date(activeAttempt.started_at).getTime();
-      if (elapsedMs > 50000) {
-        activeAttempt.status = 'abandoned';
-        activeAttempt.completed_at = new Date().toISOString();
-        student.status = 'completed';
-        this._saveLocal(LOCAL_ATTEMPTS_KEY, attempts);
-        this._saveLocal(LOCAL_STUDENTS_KEY, students);
-      } else {
-        return {
-          eligible: true,
-          status: 'ACTIVE_ATTEMPT',
-          student,
-          attempt: activeAttempt,
-          message: 'Active mission in progress.'
-        };
-      }
     }
 
     const replays = this._getLocal(LOCAL_REPLAYS_KEY);
@@ -284,6 +284,25 @@ export class StorageManager {
 
     this._inFlightAttempts.add(cleanEnrollment);
     try {
+      // Resume active attempt if within active mission window
+      const localAttempts = this._getLocal(LOCAL_ATTEMPTS_KEY);
+      const activeAttempt = localAttempts.find(a => a.enrollment_number === cleanEnrollment && a.status === 'started');
+      if (activeAttempt) {
+        const elapsedMs = Date.now() - new Date(activeAttempt.started_at).getTime();
+        if (elapsedMs <= 50000) {
+          return {
+            success: true,
+            allowed: true,
+            resumed: true,
+            attemptId: activeAttempt.id,
+            attemptNumber: activeAttempt.attempt_number,
+            isReplay: !!activeAttempt.is_replay,
+            studentName: activeAttempt.player_name || cleanName,
+            enrollment: cleanEnrollment
+          };
+        }
+      }
+
       if (this.isCloudConfigured()) {
         try {
           // Check for pending authorization
